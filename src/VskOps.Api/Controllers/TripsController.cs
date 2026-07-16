@@ -37,6 +37,25 @@ public class TripsController(
         return await trips.GetAll();
     }
 
+    /// <summary>
+    /// The orders on one trip — how a driver sees what each stop needs. Drivers are scoped to
+    /// their own trips; the general orders endpoints stay closed to them.
+    /// </summary>
+    [HttpGet("{id:int}/orders")]
+    [Authorize(Policy = AuthPolicies.DispatchRead)]
+    public async Task<ActionResult<IReadOnlyList<Order>>> GetTripOrders(int id)
+    {
+        var trip = await trips.GetById(id);
+        if (trip is null) return NotFound();
+        if (User.IsInRole(Roles.Driver))
+        {
+            var driverId = int.TryParse(User.FindFirstValue("driverId"), out var d) ? d : -1;
+            if (trip.DriverId != driverId) return Forbid();
+        }
+        var allOrders = await orders.GetAll();
+        return Ok(allOrders.Where(o => o.TripId == id).ToList());
+    }
+
     /// <summary>One truck/driver carries several approved orders in a single trip.</summary>
     [HttpPost]
     [Authorize(Policy = AuthPolicies.DispatchManage)]

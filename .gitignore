@@ -17,3 +17,7 @@ TestResults/
 appsettings.Development.json
 appsettings.Local.json
 *.pfx
+
+## Node / frontend
+node_modules/
+frontend/dist/

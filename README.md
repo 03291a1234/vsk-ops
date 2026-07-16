@@ -1,12 +1,14 @@
-# VSK Gas Ops — Backend API
+# VSK Gas Ops
 
-ASP.NET Core (.NET 8) Web API + Dapper + SQL Server/Azure SQL backend for the VSK gas cylinder
-distribution business: orders → owner approval → multi-order dispatch trips with route optimization →
-delivery reconciliation → payments & customer ledgers → reports → IOCL supply-chain tracking.
+ASP.NET Core (.NET 8) Web API + Dapper + SQL Server/Azure SQL backend, with a React (Vite) frontend,
+for the VSK gas cylinder distribution business: orders → owner approval → multi-order dispatch trips
+with route optimization → delivery reconciliation → payments & customer ledgers → reports → IOCL
+supply-chain tracking.
 
-This is **Phase 1** of the production plan (see [`docs/vsk-ops-production-plan.md`](docs/vsk-ops-production-plan.md)):
+This covers **Phases 1–2** of the production plan (see [`docs/vsk-ops-production-plan.md`](docs/vsk-ops-production-plan.md)):
 backend + schema + auth, with the business rules ported from the working React prototype
-([`docs/vsk-ops-prototype.jsx`](docs/vsk-ops-prototype.jsx)) and pinned by unit tests.
+([`docs/vsk-ops-prototype.jsx`](docs/vsk-ops-prototype.jsx)) and pinned by unit tests, plus that
+prototype's UI ported to a real frontend that talks to the API.
 
 ## Solution layout
 
@@ -16,6 +18,7 @@ backend + schema + auth, with the business rules ported from the working React p
 | `src/VskOps.Infrastructure` | Dapper repositories (hand-written SQL), DbUp migrations (`Migrations/Scripts/*.sql`, embedded), and the report queries — each reporting page the prototype computed in JS is a purpose-built `GROUP BY` query here. |
 | `src/VskOps.Api` | Controllers, JWT auth, and the role→capability matrix (Owner / Dispatch / Accountant / Driver) enforced server-side via authorization policies — the prototype's `NAV_ACCESS` map, but as a real security boundary. |
 | `tests/VskOps.Core.Tests` | xUnit tests pinning every ported business rule to the prototype's behavior. |
+| `frontend/` | React 18 + Vite + Tailwind port of the prototype UI: JWT login, role-scoped navigation, and every screen (dashboard, new order, approvals, dispatch & delivery, master data, IOCL, pricing, reports with printable invoices) wired to the API. |
 
 ## Getting started
 
@@ -34,6 +37,22 @@ dotnet user-secrets set "Jwt:Key" "<random string, 32+ chars>"
 
 dotnet run   # migrations run automatically on startup (Database:MigrateOnStartup)
 ```
+
+### Frontend
+
+```bash
+# terminal 1 — API on a fixed port for the dev proxy
+ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/VskOps.Api
+
+# terminal 2 — Vite dev server (proxies /api → localhost:5000, no CORS needed)
+cd frontend
+npm install
+npm run dev
+```
+
+Open the printed URL (default `http://localhost:5173`). On a fresh database, use
+*"First time here? Create the first Owner account"* on the login screen — the first registered
+user is forced to the Owner role; Owners create the rest.
 
 Swagger UI is at `/swagger`. Bootstrap flow:
 
@@ -84,8 +103,18 @@ Mirrors the prototype's `NAV_ACCESS`, enforced with `[Authorize(Policy = …)]`:
   `Notifications` table the same way the prototype recorded them. A hub can subscribe to the same
   writes in Phase 2.
 
+### Frontend notes
+
+- The server is authoritative for all money math — the pricing preview on New Order only renders for
+  roles allowed to read pricing (Owner/Accountant); Dispatch places orders without a preview and the
+  server prices them identically.
+- Drivers see their own trips only (`GET /api/trips` is scoped server-side) and read stop contents
+  through `GET /api/trips/{id}/orders`, which is also driver-scoped.
+- Notifications poll every 30s for now; SignalR replaces the poll in a later phase.
+- Inline IOCL transaction *editing* is not in the UI yet (delete-and-recreate reverses stock
+  correctly via the API's compensation logic); `PUT /api/iocl/{id}` already exists when it's wanted.
+
 ## Next phases
 
-2. **Port the frontend** — swap the prototype's `window.storage` calls for HTTP calls to this API; real login screen.
 3. **PWA + deploy** — manifest, service worker, responsive pass; Azure App Service + Static Web Apps + Azure SQL; extend `.github/workflows/ci.yml` with a deploy job.
 4. *(Optional)* MAUI wrapper once real native needs emerge.

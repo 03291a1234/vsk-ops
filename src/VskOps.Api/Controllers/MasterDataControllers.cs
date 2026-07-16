@@ -72,9 +72,29 @@ public class VendorsController(VendorRepository repo) : ControllerBase
 [ApiController]
 [Route("api/customers")]
 [Authorize(Policy = AuthPolicies.MasterData)]
-public class CustomersController(CustomerRepository repo) : ControllerBase
+public class CustomersController(
+    CustomerRepository repo,
+    CylinderTypeRepository cylinderTypes,
+    EventRepository events) : ControllerBase
 {
     [HttpGet] public async Task<IReadOnlyList<Customer>> GetAll() => await repo.GetAll();
+
+    /// <summary>
+    /// Cylinders this customer currently holds per type (filled − returned − purchased + opening) —
+    /// what the New Order screen offers for outright purchase.
+    /// </summary>
+    [HttpGet("{id:int}/empties")]
+    public async Task<ActionResult> GetEmptiesBalance(int id)
+    {
+        var customer = await repo.GetById(id);
+        if (customer is null) return NotFound();
+        var customerEvents = await events.GetByCustomer(id);
+        var rows = (await cylinderTypes.GetAll())
+            .Select(ct => new { cylinderTypeId = ct.Id, balance = Core.Services.Ledger.EmptiesAtCustomer(customerEvents, customer, ct.Id) })
+            .Where(r => r.balance > 0)
+            .ToList();
+        return Ok(rows);
+    }
 
     [HttpPost]
     public async Task<ActionResult> Create(Customer c)
