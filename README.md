@@ -114,7 +114,29 @@ Mirrors the prototype's `NAV_ACCESS`, enforced with `[Authorize(Policy = …)]`:
 - Inline IOCL transaction *editing* is not in the UI yet (delete-and-recreate reverses stock
   correctly via the API's compensation logic); `PUT /api/iocl/{id}` already exists when it's wanted.
 
+## PWA & mobile
+
+The frontend is an installable PWA: on a phone, open the site and use *Add to Home Screen* —
+no app store involved. Implementation notes:
+
+- `vite-plugin-pwa` generates the manifest + service worker (`registerType: autoUpdate`).
+- The service worker precaches the **app shell only**; `/api/*` is never cached — money data is
+  always fetched live (`navigateFallbackDenylist` keeps API/Swagger routes out of the SPA fallback).
+- Below the `md` breakpoint the sidebar becomes a hamburger-opened overlay drawer.
+- iOS note: PWAs need HTTPS in production (App Service provides it) and use `apple-touch-icon.png`.
+
+## Deploying to Azure
+
+Single App Service serving both API and frontend (the API serves `wwwroot` and falls back to
+`index.html` for SPA routes). [`.github/workflows/deploy-azure.yml`](.github/workflows/deploy-azure.yml)
+has the full recipe: one-time `az` provisioning commands in the header comment, then set the
+`AZURE_WEBAPP_NAME` and `AZURE_WEBAPP_PUBLISH_PROFILE` repo secrets and run the workflow from the
+Actions tab. Switch its trigger to `push` for continuous deployment once verified.
+
+If you later want the frontend on Azure Static Web Apps + the API on its own App Service instead,
+add a CORS policy to `Program.cs` and point the frontend at the API origin — the split was kept
+out of scope to minimize moving parts, per the plan.
+
 ## Next phases
 
-3. **PWA + deploy** — manifest, service worker, responsive pass; Azure App Service + Static Web Apps + Azure SQL; extend `.github/workflows/ci.yml` with a deploy job.
-4. *(Optional)* MAUI wrapper once real native needs emerge.
+4. *(Optional)* MAUI wrapper once real native needs emerge (push notifications, offline-first).

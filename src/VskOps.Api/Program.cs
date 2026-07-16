@@ -78,8 +78,22 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Single-App-Service mode: when the built frontend is published into wwwroot
+// (see .github/workflows/deploy-azure.yml), serve it and let the SPA own all
+// non-API routes. Absent wwwroot (local dev with the Vite server), this is a no-op.
+var wwwroot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+var serveSpa = File.Exists(Path.Combine(wwwroot, "index.html"));
+if (serveSpa)
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+if (serveSpa)
+    app.MapFallbackToFile("index.html");
 
 app.Run();

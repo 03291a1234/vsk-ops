@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Bell, ChevronRight, X } from "lucide-react";
+import { Bell, ChevronRight, Menu, X } from "lucide-react";
 import { AuthProvider, LoginPage, useAuth } from "./auth";
 import Sidebar, { NAV_ACCESS, navGroupOf } from "./Sidebar";
 import { api, tryGet } from "./api";
@@ -93,6 +93,7 @@ function Shell() {
   const { profile } = useAuth();
   const [tab, setTab] = useState(profile.role === "Driver" ? "dispatch" : "dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileNav, setMobileNav] = useState(false);
   const [openGroups, setOpenGroups] = useState({ masterdata: false, reports: false });
   const [toast, setToast] = useState(null);
   const [focusOrderId, setFocusOrderId] = useState(null);
@@ -112,14 +113,40 @@ function Shell() {
   return (
     <ToastContext.Provider value={notify}>
       <div className="min-h-screen bg-[#0F1316] text-[#E7ECEF] flex" style={{ fontFamily: "'Inter',sans-serif" }}>
-        <Sidebar tab={tab} setTab={setTab} open={sidebarOpen} setOpen={setSidebarOpen} openGroups={openGroups} setOpenGroups={setOpenGroups} />
+        {/* Desktop: sticky sidebar. Mobile: hidden — replaced by the drawer below. */}
+        <div className="hidden md:block">
+          <Sidebar tab={tab} setTab={setTab} open={sidebarOpen} setOpen={setSidebarOpen} openGroups={openGroups} setOpenGroups={setOpenGroups} />
+        </div>
+        {mobileNav && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNav(false)} />
+            <div className="absolute inset-y-0 left-0 shadow-2xl">
+              <Sidebar
+                tab={tab}
+                setTab={(t) => { setTab(t); setMobileNav(false); }}
+                open
+                setOpen={() => setMobileNav(false)}
+                openGroups={openGroups}
+                setOpenGroups={setOpenGroups}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 min-w-0 flex flex-col">
-          <div className="border-b border-[#262E35] px-6 h-[72px] flex items-center justify-end sticky top-0 bg-[#0F1316]/95 backdrop-blur z-20">
+          <div className="border-b border-[#262E35] px-4 md:px-6 h-[72px] flex items-center justify-between md:justify-end gap-2 sticky top-0 bg-[#0F1316]/95 backdrop-blur z-20">
+            <button
+              type="button"
+              onClick={() => setMobileNav(true)}
+              title="Open menu"
+              className="md:hidden p-2 rounded-lg hover:bg-white/5 border border-[#262E35] text-[#8FA0AC]"
+            >
+              <Menu size={17} />
+            </button>
             <NotifBell />
           </div>
 
-          <div className="p-6 max-w-6xl mx-auto w-full space-y-6">
+          <div className="p-4 md:p-6 max-w-6xl mx-auto w-full space-y-6">
             {tab === "dashboard" && hasAccess("dashboard") && <Dashboard {...ctx} />}
             {tab === "neworder" && hasAccess("neworder") && <NewOrderTab {...ctx} />}
             {tab === "orders" && hasAccess("orders") && <OrdersTab {...ctx} />}
