@@ -1,0 +1,19 @@
+## .NET
+bin/
+obj/
+out/
+*.user
+*.suo
+.vs/
+.idea/
+*.swp
+.DS_Store
+
+## Test results
+TestResults/
+*.trx
+
+## Local secrets — never commit connection strings or JWT keys
+appsettings.Development.json
+appsettings.Local.json
+*.pfx
