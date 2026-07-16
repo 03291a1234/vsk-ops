@@ -104,7 +104,13 @@ public class ReportRepository(IDbConnectionFactory db)
             """
             SELECT t.DriverId,
                    d.Name AS DriverName,
-                   STRING_AGG(DISTINCT tr.RegNo, ', ') AS Trucks,
+                   (SELECT STRING_AGG(x.RegNo, ', ')
+                    FROM (SELECT DISTINCT tr.RegNo
+                          FROM OrderPayments p2
+                          JOIN Orders o2 ON o2.Id = p2.OrderId
+                          JOIN Trips t2 ON t2.Id = o2.TripId
+                          JOIN Trucks tr ON tr.Id = t2.TruckId
+                          WHERE CAST(p2.Timestamp AS DATE) = @date AND t2.DriverId = t.DriverId) x) AS Trucks,
                    COUNT(DISTINCT o.CustomerId) AS CustomerCount,
                    ISNULL(SUM(CASE WHEN p.Method = 'Cash' THEN p.Amount END), 0) AS Cash,
                    ISNULL(SUM(CASE WHEN p.Method = 'Online' THEN p.Amount END), 0) AS Online,
@@ -113,7 +119,6 @@ public class ReportRepository(IDbConnectionFactory db)
             JOIN Orders o ON o.Id = p.OrderId
             JOIN Trips t ON t.Id = o.TripId
             JOIN Drivers d ON d.Id = t.DriverId
-            JOIN Trucks tr ON tr.Id = t.TruckId
             WHERE CAST(p.Timestamp AS DATE) = @date
             GROUP BY t.DriverId, d.Name
             HAVING SUM(p.Amount) > 0
@@ -266,7 +271,7 @@ public class ReportRepository(IDbConnectionFactory db)
         var purchaseLines = (await conn.QueryAsync<InvoiceLine>(
             """
             SELECT ep.CylinderTypeId,
-                   CONCAT(ct.Name, ' (', FORMAT(ct.Weight, '0.##'), 'kg)— Empty Cylinder Purchase') AS Label,
+                   CONCAT(ct.Name, ' (', FORMAT(ct.Weight, '0.##'), 'kg) — Empty Cylinder Purchase') AS Label,
                    SUM(ep.Qty) AS Qty, MAX(ep.Price) AS Rate, SUM(ep.Amount) AS Amount,
                    CAST(1 AS BIT) AS IsEmptyPurchase
             FROM EmptyPurchases ep
