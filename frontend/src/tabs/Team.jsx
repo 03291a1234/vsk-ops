@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { KeyRound, Plus } from "lucide-react";
+import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 import { api, tryGet } from "../api";
 import { useToast } from "../App";
 import { byId, useLoad } from "../hooks";
@@ -61,7 +61,7 @@ export default function TeamTab() {
           <Field label="Email">
             <input className={inputCls} type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder="name@example.com" />
           </Field>
-          <Field label="Password" hint="They can't change it themselves yet — pick something you can hand over safely">
+          <Field label="Password" hint="A starting password — they can change it themselves from My Account">
             <input className={inputCls} type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
           </Field>
           <Field label="Role">
@@ -88,7 +88,7 @@ export default function TeamTab() {
         {users.length === 0 ? <Empty text="No accounts yet." /> : (
           <div className="space-y-2">
             {users.map((u) => (
-              <UserRow key={u.id} user={u} driverName={u.driverId ? driverById[u.driverId]?.name ?? u.driverId : null} />
+              <UserRow key={u.id} user={u} drivers={drivers} driverById={driverById} onChanged={reload} />
             ))}
           </div>
         )}
@@ -97,25 +97,58 @@ export default function TeamTab() {
   );
 }
 
-/** One account row with an expandable Owner-driven password reset. */
-function UserRow({ user: u, driverName }) {
+/** One account row: edit (name/email/role/driver link), delete with confirm, and password reset. */
+function UserRow({ user: u, drivers, driverById, onChanged }) {
   const notify = useToast();
-  const [resetting, setResetting] = useState(false);
+  const [mode, setMode] = useState(null); // null | "reset" | "edit"
   const [newPassword, setNewPassword] = useState("");
+  const [edit, setEdit] = useState({ name: u.name, email: u.email, role: u.role, driverId: u.driverId ?? "" });
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
+  const driverName = u.driverId ? driverById[u.driverId]?.name ?? u.driverId : null;
 
-  const reset = async () => {
+  const run = async (fn, message) => {
     setBusy(true);
     try {
-      await api.put(`/api/auth/users/${u.id}/password`, { newPassword });
-      notify(`Password updated for ${u.name}.`);
+      await fn();
+      if (message) notify(message);
+      setMode(null);
       setNewPassword("");
-      setResetting(false);
+      onChanged();
     } catch (e) {
       notify(e.message);
     } finally {
       setBusy(false);
     }
+  };
+
+  const reset = () =>
+    run(() => api.put(`/api/auth/users/${u.id}/password`, { newPassword }), `Password updated for ${u.name}.`);
+
+  const save = () =>
+    run(
+      () => api.put(`/api/auth/users/${u.id}`, {
+        name: edit.name,
+        email: edit.email,
+        role: edit.role,
+        driverId: edit.role === "Driver" && edit.driverId ? Number(edit.driverId) : null,
+      }),
+      `${u.name} updated.${edit.role !== u.role ? " The new role applies from their next sign-in." : ""}`
+    );
+
+  const del = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 4000);
+      return;
+    }
+    run(() => api.del(`/api/auth/users/${u.id}`), `${u.name}'s account deleted.`);
+  };
+
+  const toggle = (m) => {
+    setMode((cur) => (cur === m ? null : m));
+    setNewPassword("");
+    setEdit({ name: u.name, email: u.email, role: u.role, driverId: u.driverId ?? "" });
   };
 
   return (
@@ -125,11 +158,18 @@ function UserRow({ user: u, driverName }) {
       <div className="flex gap-2 mt-1 items-center flex-wrap">
         <Badge tone={ROLE_TONE[u.role]}>{u.role}</Badge>
         {driverName && <Badge tone="muted">Driver: {driverName}</Badge>}
-        <Btn tone="ghost" onClick={() => { setResetting((r) => !r); setNewPassword(""); }}>
-          <KeyRound size={13} /> {resetting ? "Cancel" : "Reset password"}
+        <Btn tone="ghost" onClick={() => toggle("edit")}>
+          <Pencil size={13} /> {mode === "edit" ? "Cancel" : "Edit"}
+        </Btn>
+        <Btn tone="ghost" onClick={() => toggle("reset")}>
+          <KeyRound size={13} /> {mode === "reset" ? "Cancel" : "Reset password"}
+        </Btn>
+        <Btn tone={confirmDelete ? "danger" : "ghost"} disabled={busy} onClick={del}>
+          <Trash2 size={13} /> {confirmDelete ? "Confirm delete?" : "Delete"}
         </Btn>
       </div>
-      {resetting && (
+
+      {mode === "reset" && (
         <div className="flex items-center gap-2 mt-2">
           <input
             type="password"
@@ -139,6 +179,36 @@ function UserRow({ user: u, driverName }) {
             onChange={(e) => setNewPassword(e.target.value)}
           />
           <Btn tone="teal" disabled={busy || !newPassword} onClick={reset}>Save</Btn>
+        </div>
+      )}
+
+      {mode === "edit" && (
+        <div className="mt-3 space-y-2 border-t border-[#262E35] pt-3">
+          <div className="grid sm:grid-cols-2 gap-2">
+            <Field label="Name">
+              <input className={inputCls} value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
+            </Field>
+            <Field label="Email">
+              <input className={inputCls} type="email" value={edit.email} onChange={(e) => setEdit({ ...edit, email: e.target.value })} />
+            </Field>
+            <Field label="Role">
+              <select className={inputCls} value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}>
+                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </Field>
+            {edit.role === "Driver" && (
+              <Field label="Driver record">
+                <select className={inputCls} value={edit.driverId} onChange={(e) => setEdit({ ...edit, driverId: e.target.value })}>
+                  <option value="">Select driver…</option>
+                  {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </Field>
+            )}
+          </div>
+          {edit.role !== u.role && (
+            <p className="text-[11px] text-[#FFC857]">Role changes apply from their next sign-in.</p>
+          )}
+          <Btn tone="teal" disabled={busy || !edit.name.trim() || !edit.email.trim()} onClick={save}>Save Changes</Btn>
         </div>
       )}
     </Row>

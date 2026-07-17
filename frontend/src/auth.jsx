@@ -33,6 +33,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [registerMode, setRegisterMode] = useState(false);
   const [name, setName] = useState("");
+  const [role, setRole] = useState("Owner");
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -42,8 +43,9 @@ export function LoginPage() {
     setBusy(true);
     try {
       if (registerMode) {
-        // Bootstrap path: the very first user self-registers and becomes Owner.
-        await api.post("/api/auth/register", { name, email, password, role: "Owner", driverId: null });
+        // Bootstrap path: only the very first account can self-register, and the server
+        // forces it to Owner regardless of the selection.
+        await api.post("/api/auth/register", { name, email, password, role, driverId: null });
       }
       await login(email, password);
     } catch (err) {
@@ -76,9 +78,16 @@ export function LoginPage() {
         <Panel eyebrow={registerMode ? "First-time setup" : "Sign in"} title={registerMode ? "Create the first (Owner) account" : "Welcome back"}>
           <form onSubmit={submit} className="space-y-3">
             {registerMode && (
-              <Field label="Your Name">
-                <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. SK" />
-              </Field>
+              <>
+                <Field label="Your Name">
+                  <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. SK" />
+                </Field>
+                <Field label="Role" hint="The very first account always becomes Owner — later accounts are created by an Owner from the Team page">
+                  <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)}>
+                    {["Owner", "Dispatch", "Accountant", "Driver"].map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </Field>
+              </>
             )}
             <Field label="Email">
               <input className={inputCls} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />

@@ -235,6 +235,19 @@ public class UserRepository(IDbConnectionFactory db)
             """, u);
     }
 
+    public async Task Update(User u)
+    {
+        using var conn = db.Create();
+        await conn.ExecuteAsync(
+            "UPDATE Users SET Name = @Name, Email = @Email, Role = @Role, DriverId = @DriverId WHERE Id = @Id", u);
+    }
+
+    public async Task Delete(int id)
+    {
+        using var conn = db.Create();
+        await conn.ExecuteAsync("DELETE FROM Users WHERE Id = @id", new { id });
+    }
+
     public async Task<int> Count()
     {
         using var conn = db.Create();

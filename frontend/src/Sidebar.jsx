@@ -15,6 +15,7 @@ export const NAV_ACCESS = {
   discounts: ["Owner", "Accountant"],
   reports: ["Owner", "Dispatch", "Accountant"],
   team: ["Owner"],
+  account: ["Owner", "Dispatch", "Accountant", "Driver"],
 };
 
 export const MASTER_DATA_ITEMS = [
@@ -139,14 +140,25 @@ export default function Sidebar({ tab, setTab, open, setOpen, openGroups, setOpe
       </div>
 
       <div className="px-3 py-3 border-t border-[#262E35] shrink-0">
-        <div className="flex items-center gap-2.5 px-3 py-2 text-sm text-[#8FA0AC]">
-          <User size={16} className="shrink-0" />
-          {open && (
-            <span className="truncate text-left flex-1">
-              <span className="block leading-tight">{profile.name}</span>
-              <span className="block text-[10px] text-[#5C6975] font-mono leading-tight">{profile.role}</span>
-            </span>
-          )}
+        <div
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
+            tab === "account" ? "bg-[#FF7A45]/15 text-[#FF9A6E]" : "text-[#8FA0AC]"
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setTab("account")}
+            title="My Account"
+            className="flex items-center gap-2.5 flex-1 min-w-0 text-left hover:text-[#DDE3E7]"
+          >
+            <User size={16} className="shrink-0" />
+            {open && (
+              <span className="truncate flex-1">
+                <span className="block leading-tight">{profile.name}</span>
+                <span className="block text-[10px] text-[#5C6975] font-mono leading-tight">{profile.role} · My Account</span>
+              </span>
+            )}
+          </button>
           {open && (
             <button type="button" onClick={logout} title="Sign out" className="p-1.5 rounded-lg hover:bg-white/5 hover:text-[#DDE3E7]">
               <LogOut size={14} />

@@ -12,6 +12,7 @@ import { CustomersTab, CylindersTab, DriversTab, TrucksTab, VendorsTab } from ".
 import PricingTab from "./tabs/Pricing";
 import ReportsTab from "./tabs/Reports";
 import TeamTab from "./tabs/Team";
+import AccountTab from "./tabs/Account";
 
 const ToastContext = createContext(() => {});
 export const useToast = () => useContext(ToastContext);
@@ -159,6 +160,7 @@ function Shell() {
             {tab === "customers" && hasAccess("customers") && <CustomersTab {...ctx} />}
             {tab === "discounts" && hasAccess("discounts") && <PricingTab {...ctx} />}
             {tab === "team" && hasAccess("team") && <TeamTab {...ctx} />}
+            {tab === "account" && <AccountTab {...ctx} />}
             {tab.startsWith("reports-") && hasAccess("reports") && <ReportsTab {...ctx} section={tab.replace("reports-", "")} />}
           </div>
         </div>
