@@ -4,7 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 // The dev server proxies /api to the ASP.NET Core backend, so no CORS setup is needed.
-// Start the API with: ASPNETCORE_URLS=http://localhost:5000 dotnet run --project ../src/VskOps.Api
+// Start the API with: dotnet run --project ../src/VskOps.Api  (port 5080 via launchSettings —
+// not 5000, which macOS Control Center / AirPlay occupies)
 export default defineConfig({
   plugins: [
     react(),
@@ -37,7 +38,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/api": "http://localhost:5000",
+      "/api": "http://localhost:5080",
     },
   },
 });

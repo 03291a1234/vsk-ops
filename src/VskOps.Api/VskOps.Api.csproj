@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,6 +8,7 @@
     <!-- XML docs feed the Swagger UI (endpoint summaries); 1591 = "missing XML comment" noise -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <UserSecretsId>83769c8e-d0fe-4854-bb84-93b967d8eb3d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

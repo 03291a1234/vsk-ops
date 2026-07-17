@@ -1,4 +1,7 @@
 /** Thin fetch wrapper for the VSK Ops API — attaches the JWT and normalizes errors. */
+// Same-origin by default (dev proxy / single-app hosting); set VITE_API_URL at build
+// time when the API lives on its own origin (split App Service deployment).
+const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 const TOKEN_KEY = "vsk-ops-token";
 const PROFILE_KEY = "vsk-ops-profile";
 
@@ -33,7 +36,7 @@ export class ApiError extends Error {
 async function request(path, { method = "GET", body } = {}) {
   const headers = { "Content-Type": "application/json" };
   if (auth.token) headers.Authorization = `Bearer ${auth.token}`;
-  const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const res = await fetch(API_BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
   if (res.status === 401 && auth.token) {
     auth.clear();
     window.location.reload(); // token expired — back to login

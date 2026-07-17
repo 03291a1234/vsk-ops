@@ -1,29 +1,25 @@
-# Deploys the API + frontend as a single Azure App Service (frontend built into wwwroot).
+# Split deployment: API on a Windows App Service, frontend on a Linux App Service.
 #
-# One-time setup (Azure CLI):
-#   az group create -n vsk-ops-rg -l centralindia
-#   az appservice plan create -n vsk-ops-plan -g vsk-ops-rg --sku B1 --is-linux
-#   az webapp create -n <your-app-name> -g vsk-ops-rg -p vsk-ops-plan --runtime "DOTNETCORE:8.0"
-#   az sql server create -n <your-sql-server> -g vsk-ops-rg -u vskadmin -p '<password>'
-#   az sql db create -n VskOps -g vsk-ops-rg -s <your-sql-server> --service-objective Basic
-#   az webapp config appsettings set -n <your-app-name> -g vsk-ops-rg --settings \
-#       ConnectionStrings__VskOps='<connection string>' Jwt__Key='<random 32+ chars>' \
-#       Database__MigrateOnStartup=true
+# The API needs these app settings on its App Service (Configuration → Application settings):
+#   ConnectionStrings__VskOps  — the Azure SQL connection string
+#   Jwt__Key                   — random string, 32+ chars
+#   Database__MigrateOnStartup — true
+#   Cors__AllowedOrigins__0    — https://<frontend-app>.azurewebsites.net
 #
-# Then add repo secrets (Settings → Secrets and variables → Actions):
-#   AZURE_WEBAPP_NAME            — the app service name
-#   AZURE_WEBAPP_PUBLISH_PROFILE — from: az webapp deployment list-publishing-profiles \
-#                                        -n <your-app-name> -g vsk-ops-rg --xml
+# The frontend Linux app serves the static build with:  pm2 serve /home/site/wwwroot --no-daemon --spa
+# (set once as the app's Startup Command). VITE_API_URL is baked in at build time below.
 #
-# Trigger manually from the Actions tab (workflow_dispatch), or change `on:` to
-# push once you're happy with it.
+# Repo secrets required (Settings → Secrets and variables → Actions):
+#   AZURE_API_APP_NAME / AZURE_API_PUBLISH_PROFILE   — Windows App Service (API)
+#   AZURE_WEB_APP_NAME / AZURE_WEB_PUBLISH_PROFILE   — Linux App Service (frontend)
+#   API_URL                                          — https://<api-app>.azurewebsites.net
 name: Deploy to Azure
 
 on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +29,21 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Publish API
+        run: dotnet publish src/VskOps.Api -c Release -o publish
+
+      - name: Deploy to Windows App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_API_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
+          package: publish
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
@@ -40,20 +51,17 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Build frontend
+      - name: Build frontend against the API origin
         working-directory: frontend
+        env:
+          VITE_API_URL: ${{ secrets.API_URL }}
         run: |
           npm ci
           npm run build
 
-      - name: Publish API with frontend in wwwroot
-        run: |
-          dotnet publish src/VskOps.Api -c Release -o publish
-          cp -r frontend/dist/. publish/wwwroot/
-
-      - name: Deploy to Azure App Service
+      - name: Deploy to Linux App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: publish
+          app-name: ${{ secrets.AZURE_WEB_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEB_PUBLISH_PROFILE }}
+          package: frontend/dist

@@ -51,6 +51,13 @@ builder.Services
     });
 builder.Services.AddAuthorization(o => o.AddVskPolicies());
 
+// Split-hosting mode: when the frontend runs on its own origin (separate App Service),
+// list it in Cors:AllowedOrigins. Single-app hosting (SPA in wwwroot) needs no CORS.
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+if (corsOrigins.Length > 0)
+    builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
+        p.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod()));
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
@@ -103,6 +110,8 @@ if (serveSpa)
     app.UseStaticFiles();
 }
 
+if (corsOrigins.Length > 0)
+    app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -41,10 +41,10 @@ dotnet run   # migrations run automatically on startup (Database:MigrateOnStartu
 ### Frontend
 
 ```bash
-# terminal 1 — API on a fixed port for the dev proxy
-ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/VskOps.Api
+# terminal 1 — API (port 5080 via launchSettings; 5000 is taken by macOS AirPlay)
+dotnet run --project src/VskOps.Api
 
-# terminal 2 — Vite dev server (proxies /api → localhost:5000, no CORS needed)
+# terminal 2 — Vite dev server (proxies /api → localhost:5080, no CORS needed)
 cd frontend
 npm install
 npm run dev
