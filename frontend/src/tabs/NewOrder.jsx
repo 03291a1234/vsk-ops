@@ -114,8 +114,8 @@ export default function NewOrderTab({ setTab }) {
               {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </Field>
-          <Field label="Order Date" hint="Today or a future date">
-            <DateInput min={todayStr()} value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+          <Field label="Order Date" hint="Past dates allowed too — for backfilling orders that weren't entered on the day">
+            <DateInput value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
           </Field>
 
           <div className="space-y-2">
