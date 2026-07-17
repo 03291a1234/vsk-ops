@@ -55,7 +55,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
 {
-    o.SwaggerDoc("v1", new OpenApiInfo { Title = "VSK Gas Ops API", Version = "v1" });
+    o.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "VSK Gas Ops API",
+        Version = "v1",
+        Description = "Gas cylinder distribution: orders → owner approval → dispatch trips with route "
+                      + "optimization → delivery reconciliation → payments & ledgers → reports → IOCL supply chain. "
+                      + "Authenticate via POST /api/auth/login, then click Authorize and paste the token.",
+    });
+    o.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "VskOps.Api.xml"), includeControllerXmlComments: true);
+    o.MapType<DateOnly>(() => new OpenApiSchema { Type = "string", Format = "date", Example = new Microsoft.OpenApi.Any.OpenApiString("2026-07-17") });
     o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT bearer token. Obtain one from POST /api/auth/login.",
@@ -77,7 +86,11 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     DatabaseMigrator.MigrateToLatest(connectionString);
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(o =>
+{
+    o.DocumentTitle = "VSK Gas Ops API";
+    o.DisplayRequestDuration();
+});
 
 // Single-App-Service mode: when the built frontend is published into wwwroot
 // (see .github/workflows/deploy-azure.yml), serve it and let the SPA own all
@@ -95,5 +108,7 @@ app.UseAuthorization();
 app.MapControllers();
 if (serveSpa)
     app.MapFallbackToFile("index.html");
+else
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription(); // API-only mode: land on the docs
 
 app.Run();
