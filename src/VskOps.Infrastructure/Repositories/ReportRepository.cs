@@ -31,28 +31,26 @@ public record InvoiceData(
 
 /// <summary>
 /// Reporting queries ported from the prototype's Reports pages. Each aggregation that the artifact
-/// computed by scanning the whole state in JS is one purpose-built GROUP BY query here (PostgreSQL).
+/// computed by scanning the whole state in JS is one purpose-built GROUP BY query here.
 /// Semantics preserved:
 /// - "filled" events already exclude defective units (logged at delivery from the actual full count);
 /// - delivered-order quantities/amounts key off the order's delivery date, not its order date;
 /// - a customer's ledger balance is opening balance + remaining due on delivered orders dated on/before
-///   the as-of date, counting only payments recorded on/before that date;
-/// - timestamps are stored UTC, so date bucketing uses AT TIME ZONE 'UTC' to stay deterministic
-///   regardless of the session's TimeZone setting.
+///   the as-of date, counting only payments recorded on/before that date.
 /// </summary>
 public class ReportRepository(IDbConnectionFactory db)
 {
     private const string LedgerBalanceSql =
         """
-        SELECT COALESCE(SUM(x.Due), 0) + (SELECT COALESCE(SUM(OpeningBalance), 0) FROM Customers WHERE (@customerId IS NULL OR Id = @customerId))
+        SELECT ISNULL(SUM(x.Due), 0) + (SELECT ISNULL(SUM(OpeningBalance), 0) FROM Customers WHERE (@customerId IS NULL OR Id = @customerId))
         FROM (
-            SELECT GREATEST(o.Amount - COALESCE(p.Paid, 0), 0) AS Due
+            SELECT CASE WHEN o.Amount - ISNULL(p.Paid, 0) > 0 THEN o.Amount - ISNULL(p.Paid, 0) ELSE 0 END AS Due
             FROM Orders o
-            LEFT JOIN LATERAL (
+            OUTER APPLY (
                 SELECT SUM(op.Amount) AS Paid FROM OrderPayments op
-                WHERE op.OrderId = o.Id AND (op.Timestamp AT TIME ZONE 'UTC')::date <= @asOf
-            ) p ON TRUE
-            WHERE o.Rejected = FALSE AND o.Stage = 3 AND o.OrderDate <= @asOf
+                WHERE op.OrderId = o.Id AND CAST(op.Timestamp AS DATE) <= @asOf
+            ) p
+            WHERE o.Rejected = 0 AND o.Stage = 3 AND o.OrderDate <= @asOf
               AND (@customerId IS NULL OR o.CustomerId = @customerId)
         ) x
         """;
@@ -69,9 +67,9 @@ public class ReportRepository(IDbConnectionFactory db)
         var (filled, empty, defect) = await conn.QuerySingleAsync<(int, int, int)>(
             """
             SELECT
-                COALESCE(SUM(Qty) FILTER (WHERE Action = 'filled'), 0)::int,
-                COALESCE(SUM(Qty) FILTER (WHERE Action = 'empty_return'), 0)::int,
-                COALESCE(SUM(Qty) FILTER (WHERE Action = 'defect'), 0)::int
+                ISNULL(SUM(CASE WHEN Action = 'filled' THEN Qty END), 0),
+                ISNULL(SUM(CASE WHEN Action = 'empty_return' THEN Qty END), 0),
+                ISNULL(SUM(CASE WHEN Action = 'defect' THEN Qty END), 0)
             FROM Events WHERE Date = @date
             """, new { date });
         var ledger = await conn.ExecuteScalarAsync<decimal>(LedgerBalanceSql, new { asOf = date, customerId = (int?)null });
@@ -84,10 +82,10 @@ public class ReportRepository(IDbConnectionFactory db)
         return (await conn.QueryAsync<TypeMovementRow>(
             """
             SELECT ct.Id AS CylinderTypeId,
-                   ct.Name || ' (' || trim_scale(ct.Weight)::text || 'kg)' AS Label,
-                   COALESCE(SUM(e.Qty) FILTER (WHERE e.Action = 'filled'), 0)::int AS Filled,
-                   COALESCE(SUM(e.Qty) FILTER (WHERE e.Action = 'empty_return'), 0)::int AS Empty,
-                   COALESCE(SUM(e.Qty) FILTER (WHERE e.Action = 'defect'), 0)::int AS Defect
+                   CONCAT(ct.Name, ' (', FORMAT(ct.Weight, '0.##'), 'kg)') AS Label,
+                   ISNULL(SUM(CASE WHEN e.Action = 'filled' THEN e.Qty END), 0) AS Filled,
+                   ISNULL(SUM(CASE WHEN e.Action = 'empty_return' THEN e.Qty END), 0) AS Empty,
+                   ISNULL(SUM(CASE WHEN e.Action = 'defect' THEN e.Qty END), 0) AS Defect
             FROM CylinderTypes ct
             LEFT JOIN Events e ON e.CylinderTypeId = ct.Id AND e.Date = @date
             GROUP BY ct.Id, ct.Name, ct.Weight
@@ -106,17 +104,22 @@ public class ReportRepository(IDbConnectionFactory db)
             """
             SELECT t.DriverId,
                    d.Name AS DriverName,
-                   STRING_AGG(DISTINCT tr.RegNo, ', ') AS Trucks,
-                   COUNT(DISTINCT o.CustomerId)::int AS CustomerCount,
-                   COALESCE(SUM(p.Amount) FILTER (WHERE p.Method = 'Cash'), 0) AS Cash,
-                   COALESCE(SUM(p.Amount) FILTER (WHERE p.Method = 'Online'), 0) AS Online,
-                   COALESCE(SUM(p.Amount), 0) AS Total
+                   (SELECT STRING_AGG(x.RegNo, ', ')
+                    FROM (SELECT DISTINCT tr.RegNo
+                          FROM OrderPayments p2
+                          JOIN Orders o2 ON o2.Id = p2.OrderId
+                          JOIN Trips t2 ON t2.Id = o2.TripId
+                          JOIN Trucks tr ON tr.Id = t2.TruckId
+                          WHERE CAST(p2.Timestamp AS DATE) = @date AND t2.DriverId = t.DriverId) x) AS Trucks,
+                   COUNT(DISTINCT o.CustomerId) AS CustomerCount,
+                   ISNULL(SUM(CASE WHEN p.Method = 'Cash' THEN p.Amount END), 0) AS Cash,
+                   ISNULL(SUM(CASE WHEN p.Method = 'Online' THEN p.Amount END), 0) AS Online,
+                   ISNULL(SUM(p.Amount), 0) AS Total
             FROM OrderPayments p
             JOIN Orders o ON o.Id = p.OrderId
             JOIN Trips t ON t.Id = o.TripId
             JOIN Drivers d ON d.Id = t.DriverId
-            JOIN Trucks tr ON tr.Id = t.TruckId
-            WHERE (p.Timestamp AT TIME ZONE 'UTC')::date = @date
+            WHERE CAST(p.Timestamp AS DATE) = @date
             GROUP BY t.DriverId, d.Name
             HAVING SUM(p.Amount) > 0
             """, new { date })).ToList();
@@ -134,7 +137,7 @@ public class ReportRepository(IDbConnectionFactory db)
 
         var eventRows = (await conn.QueryAsync<(int CustomerId, int CylinderTypeId, string Action, int Qty)>(
             """
-            SELECT CustomerId, CylinderTypeId, Action, SUM(Qty)::int AS Qty
+            SELECT CustomerId, CylinderTypeId, Action, SUM(Qty) AS Qty
             FROM Events
             WHERE Date >= @start AND Date <= @end AND (@customerId IS NULL OR CustomerId = @customerId)
             GROUP BY CustomerId, CylinderTypeId, Action
@@ -152,12 +155,12 @@ public class ReportRepository(IDbConnectionFactory db)
         var orderAgg = (await conn.QueryAsync<(int CustomerId, int CylinderTypeId, int OrderedQty, int DeliveredQty, decimal Rate, decimal Amount)>(
             """
             SELECT o.CustomerId, oi.CylinderTypeId,
-                   SUM(oi.OrderedQty)::int AS OrderedQty, SUM(oi.Qty)::int AS DeliveredQty,
+                   SUM(oi.OrderedQty) AS OrderedQty, SUM(oi.Qty) AS DeliveredQty,
                    MAX(oi.Rate) AS Rate, SUM(oi.Amount) AS Amount
             FROM OrderItems oi
             JOIN Orders o ON o.Id = oi.OrderId
-            WHERE o.Rejected = FALSE AND o.DeliveredAt IS NOT NULL
-              AND (o.DeliveredAt AT TIME ZONE 'UTC')::date >= @start AND (o.DeliveredAt AT TIME ZONE 'UTC')::date <= @end
+            WHERE o.Rejected = 0 AND o.DeliveredAt IS NOT NULL
+              AND CAST(o.DeliveredAt AS DATE) >= @start AND CAST(o.DeliveredAt AS DATE) <= @end
               AND (@customerId IS NULL OR o.CustomerId = @customerId)
             GROUP BY o.CustomerId, oi.CylinderTypeId
             """, new { start, end, customerId })).ToList();
@@ -165,11 +168,11 @@ public class ReportRepository(IDbConnectionFactory db)
         var paymentRows = (await conn.QueryAsync<(int CustomerId, decimal Cash, decimal Online)>(
             """
             SELECT o.CustomerId,
-                   COALESCE(SUM(p.Amount) FILTER (WHERE p.Method = 'Cash'), 0) AS Cash,
-                   COALESCE(SUM(p.Amount) FILTER (WHERE p.Method = 'Online'), 0) AS Online
+                   ISNULL(SUM(CASE WHEN p.Method = 'Cash' THEN p.Amount END), 0) AS Cash,
+                   ISNULL(SUM(CASE WHEN p.Method = 'Online' THEN p.Amount END), 0) AS Online
             FROM OrderPayments p
             JOIN Orders o ON o.Id = p.OrderId
-            WHERE (p.Timestamp AT TIME ZONE 'UTC')::date >= @start AND (p.Timestamp AT TIME ZONE 'UTC')::date <= @end
+            WHERE CAST(p.Timestamp AS DATE) >= @start AND CAST(p.Timestamp AS DATE) <= @end
               AND (@customerId IS NULL OR o.CustomerId = @customerId)
             GROUP BY o.CustomerId
             """, new { start, end, customerId })).ToList();
@@ -177,14 +180,14 @@ public class ReportRepository(IDbConnectionFactory db)
         var balances = (await conn.QueryAsync<(int CustomerId, decimal Balance)>(
             """
             SELECT c.Id AS CustomerId,
-                   c.OpeningBalance + COALESCE((
-                       SELECT SUM(GREATEST(o.Amount - COALESCE(p.Paid, 0), 0))
+                   c.OpeningBalance + ISNULL((
+                       SELECT SUM(CASE WHEN o.Amount - ISNULL(p.Paid, 0) > 0 THEN o.Amount - ISNULL(p.Paid, 0) ELSE 0 END)
                        FROM Orders o
-                       LEFT JOIN LATERAL (
+                       OUTER APPLY (
                            SELECT SUM(op.Amount) AS Paid FROM OrderPayments op
-                           WHERE op.OrderId = o.Id AND (op.Timestamp AT TIME ZONE 'UTC')::date <= @end
-                       ) p ON TRUE
-                       WHERE o.CustomerId = c.Id AND o.Rejected = FALSE AND o.Stage = 3 AND o.OrderDate <= @end
+                           WHERE op.OrderId = o.Id AND CAST(op.Timestamp AS DATE) <= @end
+                       ) p
+                       WHERE o.CustomerId = c.Id AND o.Rejected = 0 AND o.Stage = 3 AND o.OrderDate <= @end
                    ), 0) AS Balance
             FROM Customers c
             WHERE (@customerId IS NULL OR c.Id = @customerId)
@@ -254,23 +257,23 @@ public class ReportRepository(IDbConnectionFactory db)
         var deliveryLines = (await conn.QueryAsync<InvoiceLine>(
             """
             SELECT oi.CylinderTypeId,
-                   ct.Name || ' (' || trim_scale(ct.Weight)::text || 'kg)' AS Label,
-                   SUM(oi.Qty)::int AS Qty, MAX(oi.Rate) AS Rate, SUM(oi.Amount) AS Amount,
-                   FALSE AS IsEmptyPurchase
+                   CONCAT(ct.Name, ' (', FORMAT(ct.Weight, '0.##'), 'kg)') AS Label,
+                   SUM(oi.Qty) AS Qty, MAX(oi.Rate) AS Rate, SUM(oi.Amount) AS Amount,
+                   CAST(0 AS BIT) AS IsEmptyPurchase
             FROM OrderItems oi
             JOIN Orders o ON o.Id = oi.OrderId
             JOIN CylinderTypes ct ON ct.Id = oi.CylinderTypeId
-            WHERE o.CustomerId = @customerId AND o.Rejected = FALSE AND o.DeliveredAt IS NOT NULL
-              AND (o.DeliveredAt AT TIME ZONE 'UTC')::date >= @start AND (o.DeliveredAt AT TIME ZONE 'UTC')::date <= @end
+            WHERE o.CustomerId = @customerId AND o.Rejected = 0 AND o.DeliveredAt IS NOT NULL
+              AND CAST(o.DeliveredAt AS DATE) >= @start AND CAST(o.DeliveredAt AS DATE) <= @end
             GROUP BY oi.CylinderTypeId, ct.Name, ct.Weight
             """, new { customerId, start, end })).ToList();
 
         var purchaseLines = (await conn.QueryAsync<InvoiceLine>(
             """
             SELECT ep.CylinderTypeId,
-                   ct.Name || ' (' || trim_scale(ct.Weight)::text || 'kg) — Empty Cylinder Purchase' AS Label,
-                   SUM(ep.Qty)::int AS Qty, MAX(ep.Price) AS Rate, SUM(ep.Amount) AS Amount,
-                   TRUE AS IsEmptyPurchase
+                   CONCAT(ct.Name, ' (', FORMAT(ct.Weight, '0.##'), 'kg) — Empty Cylinder Purchase') AS Label,
+                   SUM(ep.Qty) AS Qty, MAX(ep.Price) AS Rate, SUM(ep.Amount) AS Amount,
+                   CAST(1 AS BIT) AS IsEmptyPurchase
             FROM EmptyPurchases ep
             JOIN Orders o ON o.Id = ep.OrderId
             JOIN CylinderTypes ct ON ct.Id = ep.CylinderTypeId
@@ -284,7 +287,7 @@ public class ReportRepository(IDbConnectionFactory db)
             FROM OrderPayments p
             JOIN Orders o ON o.Id = p.OrderId
             WHERE o.CustomerId = @customerId
-              AND (p.Timestamp AT TIME ZONE 'UTC')::date >= @start AND (p.Timestamp AT TIME ZONE 'UTC')::date <= @end
+              AND CAST(p.Timestamp AS DATE) >= @start AND CAST(p.Timestamp AS DATE) <= @end
             ORDER BY p.Timestamp
             """, new { customerId, start, end })).ToList();
 

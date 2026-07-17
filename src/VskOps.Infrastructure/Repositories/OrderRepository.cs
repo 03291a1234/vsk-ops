@@ -32,7 +32,7 @@ public class OrderRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return await LoadWithChildren(conn,
-            $"{SelectOrders} WHERE Stage = 1 AND TripId IS NULL AND Rejected = FALSE", new { });
+            $"{SelectOrders} WHERE Stage = 1 AND TripId IS NULL AND Rejected = 0", new { });
     }
 
     private static async Task<IReadOnlyList<Order>> LoadWithChildren(IDbConnection conn, string sql, object param)
@@ -41,9 +41,9 @@ public class OrderRepository(IDbConnectionFactory db)
         if (orders.Count == 0) return orders;
 
         var ids = orders.Select(o => o.Id).ToArray();
-        var items = await conn.QueryAsync<OrderItem>("SELECT * FROM OrderItems WHERE OrderId = ANY(@ids)", new { ids });
-        var payments = await conn.QueryAsync<OrderPayment>("SELECT * FROM OrderPayments WHERE OrderId = ANY(@ids) ORDER BY Timestamp", new { ids });
-        var purchases = await conn.QueryAsync<EmptyPurchase>("SELECT * FROM EmptyPurchases WHERE OrderId = ANY(@ids)", new { ids });
+        var items = await conn.QueryAsync<OrderItem>("SELECT * FROM OrderItems WHERE OrderId IN @ids", new { ids });
+        var payments = await conn.QueryAsync<OrderPayment>("SELECT * FROM OrderPayments WHERE OrderId IN @ids ORDER BY Timestamp", new { ids });
+        var purchases = await conn.QueryAsync<EmptyPurchase>("SELECT * FROM EmptyPurchases WHERE OrderId IN @ids", new { ids });
 
         var byId = orders.ToDictionary(o => o.Id);
         foreach (var it in items) byId[it.OrderId].Items.Add(it);
@@ -62,7 +62,7 @@ public class OrderRepository(IDbConnectionFactory db)
         var orderId = await conn.ExecuteScalarAsync<int>(
             """
             INSERT INTO Orders (CustomerId, OrderDate, Stage, Rejected, Amount)
-            VALUES (@CustomerId, @OrderDate, @Stage, @Rejected, @Amount) RETURNING Id
+            OUTPUT INSERTED.Id VALUES (@CustomerId, @OrderDate, @Stage, @Rejected, @Amount)
             """, order, tx);
 
         foreach (var it in order.Items)
@@ -104,7 +104,7 @@ public class OrderRepository(IDbConnectionFactory db)
                 "UPDATE Orders SET Stage = 1, ApprovedBy = @owner WHERE Id = @orderId", new { orderId, owner }, tx);
         else
             await conn.ExecuteAsync(
-                "UPDATE Orders SET Rejected = TRUE, ApprovedBy = @owner WHERE Id = @orderId", new { orderId, owner }, tx);
+                "UPDATE Orders SET Rejected = 1, ApprovedBy = @owner WHERE Id = @orderId", new { orderId, owner }, tx);
         await conn.ExecuteAsync(
             "INSERT INTO OrderHistory (OrderId, Stage) VALUES (@orderId, @label)",
             new { orderId, label = (approved ? "Approved by " : "Rejected by ") + owner }, tx);

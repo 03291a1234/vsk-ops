@@ -1,6 +1,6 @@
 # VSK Gas Ops
 
-ASP.NET Core (.NET 8) Web API + Dapper + PostgreSQL backend, with a React (Vite) frontend,
+ASP.NET Core (.NET 8) Web API + Dapper + SQL Server/Azure SQL backend, with a React (Vite) frontend,
 for the VSK gas cylinder distribution business: orders → owner approval → multi-order dispatch trips
 with route optimization → delivery reconciliation → payments & customer ledgers → reports → IOCL
 supply-chain tracking.
@@ -22,10 +22,8 @@ prototype's UI ported to a real frontend that talks to the API.
 
 ## Getting started
 
-Prereqs: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and PostgreSQL **13+**
-(the report queries use `trim_scale`) — Azure Database for PostgreSQL, or locally e.g.
-`docker run -e POSTGRES_PASSWORD='<pass>' -p 5432:5432 -d postgres:16`
-(or `brew install postgresql@16 && brew services start postgresql@16`).
+Prereqs: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and a SQL Server —
+Azure SQL, or locally e.g. `docker run -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD='<YourStrong!Pass>' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest`.
 
 ```bash
 dotnet build
@@ -34,7 +32,7 @@ dotnet test
 # configure secrets (don't put real values in appsettings.json)
 cd src/VskOps.Api
 dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:VskOps" "Host=localhost;Port=5432;Database=vskops;Username=postgres;Password=<pass>"
+dotnet user-secrets set "ConnectionStrings:VskOps" "Server=localhost,1433;Database=VskOps;User Id=sa;Password=<YourStrong!Pass>;TrustServerCertificate=True"
 dotnet user-secrets set "Jwt:Key" "<random string, 32+ chars>"
 
 dotnet run   # migrations run automatically on startup (Database:MigrateOnStartup)
@@ -104,13 +102,10 @@ Mirrors the prototype's `NAV_ACCESS`, enforced with `[Authorize(Policy = …)]`:
 - **SignalR** (real-time notifications) is not wired yet; notifications persist to the
   `Notifications` table the same way the prototype recorded them. A hub can subscribe to the same
   writes in Phase 2.
-- **PostgreSQL instead of Azure SQL** (switched after the initial scaffold). Two Dapper+Npgsql
-  specifics to know when writing new queries: `DateOnly` parameters go through the registered
-  `DateOnlyTypeHandler` (`DapperConfig.EnsureInitialized`), and list parameters must use
-  `= ANY(@ids)` with an **array** — Npgsql passes .NET arrays through as native Postgres arrays,
-  so Dapper's `IN @ids` expansion never happens. `Full` is a reserved word in Postgres, hence the
-  quoted `"Full"` column on `Inventory`. Timestamps are `timestamptz` (UTC); date bucketing in
-  reports uses `AT TIME ZONE 'UTC'` to stay deterministic.
+- **Dapper + `DateOnly`**: Dapper can't bind `DateOnly` parameters natively (it throws
+  "cannot be used as a parameter value" at runtime) — `DateOnlyTypeHandler` (registered by
+  `DapperConfig.EnsureInitialized` from the connection factory) maps them to the SQL `date` type.
+  Keep it in mind if you add a new connection factory or standalone Dapper usage.
 
 ### Frontend notes
 

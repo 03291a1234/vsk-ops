@@ -3,15 +3,15 @@ using DbUp;
 
 namespace VskOps.Infrastructure;
 
-/// <summary>Runs embedded SQL migration scripts (Migrations/Scripts/*.sql) with DbUp, journaled in public.schemaversions.</summary>
+/// <summary>Runs embedded SQL migration scripts (Migrations/Scripts/*.sql) with DbUp, journaled in dbo.SchemaVersions.</summary>
 public static class DatabaseMigrator
 {
     public static void MigrateToLatest(string connectionString)
     {
-        EnsureDatabase.For.PostgresqlDatabase(connectionString);
+        EnsureDatabase.For.SqlDatabase(connectionString);
 
         var upgrader = DeployChanges.To
-            .PostgresqlDatabase(connectionString)
+            .SqlDatabase(connectionString)
             .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
             .WithTransactionPerScript()
             .LogToConsole()

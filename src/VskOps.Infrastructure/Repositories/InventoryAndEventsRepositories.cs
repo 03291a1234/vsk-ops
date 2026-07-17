@@ -10,14 +10,14 @@ public class InventoryRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return (await conn.QueryAsync<InventoryRecord>(
-            """SELECT Id, CylinderTypeId, "Full", Empty, Defective, UpdatedAt FROM Inventory""")).ToList();
+            "SELECT Id, CylinderTypeId, [Full], Empty, Defective, UpdatedAt FROM Inventory")).ToList();
     }
 
     public async Task<InventoryRecord?> GetByType(int cylinderTypeId)
     {
         using var conn = db.Create();
         return await conn.QuerySingleOrDefaultAsync<InventoryRecord>(
-            """SELECT Id, CylinderTypeId, "Full", Empty, Defective, UpdatedAt FROM Inventory WHERE CylinderTypeId = @cylinderTypeId""",
+            "SELECT Id, CylinderTypeId, [Full], Empty, Defective, UpdatedAt FROM Inventory WHERE CylinderTypeId = @cylinderTypeId",
             new { cylinderTypeId });
     }
 
@@ -27,12 +27,12 @@ public class InventoryRepository(IDbConnectionFactory db)
         using var conn = db.Create();
         var updated = await conn.ExecuteAsync(
             """
-            UPDATE Inventory SET "Full" = @full, Empty = @empty, Defective = @defective, UpdatedAt = now()
+            UPDATE Inventory SET [Full] = @full, Empty = @empty, Defective = @defective, UpdatedAt = SYSUTCDATETIME()
             WHERE CylinderTypeId = @cylinderTypeId
             """, new { cylinderTypeId, full, empty, defective });
         if (updated == 0)
             await conn.ExecuteAsync(
-                """INSERT INTO Inventory (CylinderTypeId, "Full", Empty, Defective) VALUES (@cylinderTypeId, @full, @empty, @defective)""",
+                "INSERT INTO Inventory (CylinderTypeId, [Full], Empty, Defective) VALUES (@cylinderTypeId, @full, @empty, @defective)",
                 new { cylinderTypeId, full, empty, defective });
     }
 
@@ -78,8 +78,8 @@ public class IoclRepository(IDbConnectionFactory db)
         var id = await conn.ExecuteScalarAsync<int>(
             """
             INSERT INTO IoclTransactions (Type, Date, CylinderTypeId, Qty, EmptyQty, DefectiveQty, VendorId, AmountBilled, Paid, PaidOn, Note)
+            OUTPUT INSERTED.Id
             VALUES (@Type, @Date, @CylinderTypeId, @Qty, @EmptyQty, @DefectiveQty, @VendorId, @AmountBilled, @Paid, @PaidOn, @Note)
-            RETURNING Id
             """, t, tx);
         var delta = IoclLogic.DeltaFor(t);
         await TripRepository.AdjustInventoryInTx(conn, tx, delta.CylinderTypeId, delta.Full, delta.Empty, delta.Defective);
@@ -93,8 +93,8 @@ public class IoclRepository(IDbConnectionFactory db)
         await conn.ExecuteAsync(
             """
             UPDATE IoclTransactions
-            SET Paid = NOT Paid,
-                PaidOn = CASE WHEN NOT Paid THEN CURRENT_DATE ELSE NULL END
+            SET Paid = 1 - Paid,
+                PaidOn = CASE WHEN Paid = 0 THEN CAST(SYSUTCDATETIME() AS DATE) ELSE NULL END
             WHERE Id = @id
             """, new { id });
     }

@@ -15,7 +15,7 @@ public class DriverRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return await conn.ExecuteScalarAsync<int>(
-            "INSERT INTO Drivers (Name, Phone, License) VALUES (@Name, @Phone, @License) RETURNING Id", d);
+            "INSERT INTO Drivers (Name, Phone, License) OUTPUT INSERTED.Id VALUES (@Name, @Phone, @License)", d);
     }
 
     public async Task Delete(int id)
@@ -37,7 +37,7 @@ public class TruckRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return await conn.ExecuteScalarAsync<int>(
-            "INSERT INTO Trucks (RegNo, Capacity, DriverId) VALUES (@RegNo, @Capacity, @DriverId) RETURNING Id", t);
+            "INSERT INTO Trucks (RegNo, Capacity, DriverId) OUTPUT INSERTED.Id VALUES (@RegNo, @Capacity, @DriverId)", t);
     }
 
     public async Task Delete(int id)
@@ -59,7 +59,7 @@ public class VendorRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return await conn.ExecuteScalarAsync<int>(
-            "INSERT INTO Vendors (Name, Phone, Address) VALUES (@Name, @Phone, @Address) RETURNING Id", v);
+            "INSERT INTO Vendors (Name, Phone, Address) OUTPUT INSERTED.Id VALUES (@Name, @Phone, @Address)", v);
     }
 
     /// <summary>Vendors with billing history can't be deleted (mirrors the prototype's guard).</summary>
@@ -96,7 +96,7 @@ public class CylinderTypeRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return await conn.ExecuteScalarAsync<int>(
-            "INSERT INTO CylinderTypes (Name, Weight, EmptyPrice) VALUES (@Name, @Weight, @EmptyPrice) RETURNING Id", ct);
+            "INSERT INTO CylinderTypes (Name, Weight, EmptyPrice) OUTPUT INSERTED.Id VALUES (@Name, @Weight, @EmptyPrice)", ct);
     }
 
     public async Task SetEmptyPrice(int id, decimal emptyPrice)
@@ -132,8 +132,8 @@ public class CustomerRepository(IDbConnectionFactory db)
         return await conn.ExecuteScalarAsync<int>(
             """
             INSERT INTO Customers (Name, Phone, Address, Lat, Lng, OpeningBalance, OpeningEmptiesCylinderTypeId, OpeningEmptiesQty)
+            OUTPUT INSERTED.Id
             VALUES (@Name, @Phone, @Address, @Lat, @Lng, @OpeningBalance, @OpeningEmptiesCylinderTypeId, @OpeningEmptiesQty)
-            RETURNING Id
             """, c);
     }
 
@@ -156,7 +156,7 @@ public class PricingRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return await conn.ExecuteScalarAsync<int>(
-            "INSERT INTO MrpHistory (CylinderTypeId, Value, EffectiveFrom) VALUES (@CylinderTypeId, @Value, @EffectiveFrom) RETURNING Id", m);
+            "INSERT INTO MrpHistory (CylinderTypeId, Value, EffectiveFrom) OUTPUT INSERTED.Id VALUES (@CylinderTypeId, @Value, @EffectiveFrom)", m);
     }
 
     public async Task<IReadOnlyList<Discount>> GetDiscounts()
@@ -171,7 +171,7 @@ public class PricingRepository(IDbConnectionFactory db)
         return await conn.ExecuteScalarAsync<int>(
             """
             INSERT INTO Discounts (CustomerId, CylinderTypeId, Amount, StartDate, EndDate)
-            VALUES (@CustomerId, @CylinderTypeId, @Amount, @StartDate, @EndDate) RETURNING Id
+            OUTPUT INSERTED.Id VALUES (@CustomerId, @CylinderTypeId, @Amount, @StartDate, @EndDate)
             """, d);
     }
 
@@ -188,7 +188,7 @@ public class NotificationRepository(IDbConnectionFactory db)
     {
         using var conn = db.Create();
         return (await conn.QueryAsync<Notification>(
-            "SELECT * FROM Notifications ORDER BY Timestamp DESC LIMIT @limit", new { limit })).ToList();
+            "SELECT TOP (@limit) * FROM Notifications ORDER BY Timestamp DESC", new { limit })).ToList();
     }
 
     public async Task Insert(string audience, string message)
@@ -213,7 +213,7 @@ public class UserRepository(IDbConnectionFactory db)
         return await conn.ExecuteScalarAsync<int>(
             """
             INSERT INTO Users (Name, Email, PasswordHash, Role, DriverId)
-            VALUES (@Name, @Email, @PasswordHash, @Role, @DriverId) RETURNING Id
+            OUTPUT INSERTED.Id VALUES (@Name, @Email, @PasswordHash, @Role, @DriverId)
             """, u);
     }
 

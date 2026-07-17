@@ -4,13 +4,10 @@
 #   az group create -n vsk-ops-rg -l centralindia
 #   az appservice plan create -n vsk-ops-plan -g vsk-ops-rg --sku B1 --is-linux
 #   az webapp create -n <your-app-name> -g vsk-ops-rg -p vsk-ops-plan --runtime "DOTNETCORE:8.0"
-#   az postgres flexible-server create -n <your-pg-server> -g vsk-ops-rg \
-#       --admin-user vskadmin --admin-password '<password>' \
-#       --sku-name Standard_B1ms --tier Burstable --version 16 --database-name vskops \
-#       --public-access 0.0.0.0   # allows Azure services (incl. the App Service) through the firewall
+#   az sql server create -n <your-sql-server> -g vsk-ops-rg -u vskadmin -p '<password>'
+#   az sql db create -n VskOps -g vsk-ops-rg -s <your-sql-server> --service-objective Basic
 #   az webapp config appsettings set -n <your-app-name> -g vsk-ops-rg --settings \
-#       ConnectionStrings__VskOps='Host=<your-pg-server>.postgres.database.azure.com;Database=vskops;Username=vskadmin;Password=<password>;SSL Mode=Require' \
-#       Jwt__Key='<random 32+ chars>' \
+#       ConnectionStrings__VskOps='<connection string>' Jwt__Key='<random 32+ chars>' \
 #       Database__MigrateOnStartup=true
 #
 # Then add repo secrets (Settings → Secrets and variables → Actions):

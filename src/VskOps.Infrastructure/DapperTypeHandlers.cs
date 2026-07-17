@@ -4,16 +4,17 @@ using Dapper;
 namespace VskOps.Infrastructure;
 
 /// <summary>
-/// Dapper doesn't know DateOnly as a parameter type out of the box; Npgsql maps it natively to
-/// the Postgres `date` type once the parameter gets through. Registered once via the connection
-/// factory's static initializer.
+/// Dapper doesn't know DateOnly as a parameter type out of the box (SqlMapper.LookupDbType throws
+/// "cannot be used as a parameter value" at runtime, regardless of provider). This maps DateOnly
+/// to the SQL `date` type via DateTime, which every SqlClient version binds correctly.
+/// Registered once via the connection factory's static initializer.
 /// </summary>
 public class DateOnlyTypeHandler : SqlMapper.TypeHandler<DateOnly>
 {
     public override void SetValue(IDbDataParameter parameter, DateOnly value)
     {
         parameter.DbType = DbType.Date;
-        parameter.Value = value;
+        parameter.Value = value.ToDateTime(TimeOnly.MinValue);
     }
 
     public override DateOnly Parse(object value) => value switch
