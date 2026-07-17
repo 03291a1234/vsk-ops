@@ -47,7 +47,13 @@ export function LoginPage() {
       }
       await login(email, password);
     } catch (err) {
-      setError(err.message || "Login failed");
+      if (registerMode && err.status === 403) {
+        setError("The first account already exists — new accounts are created by an Owner from the Team page after they sign in. Ask your Owner to add you.");
+      } else if (err.status === 401) {
+        setError("Email or password didn't match.");
+      } else {
+        setError(err.message || "Login failed");
+      }
     } finally {
       setBusy(false);
     }

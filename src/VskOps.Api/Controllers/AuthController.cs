@@ -20,6 +20,15 @@ public class AuthController(
 {
     private static readonly string[] ValidRoles = [Roles.Owner, Roles.Dispatch, Roles.Accountant, Roles.Driver];
 
+    /// <summary>All accounts — the Owner's Team page.</summary>
+    [HttpGet("users")]
+    [Authorize(Roles = Roles.Owner)]
+    public async Task<ActionResult> GetUsers()
+    {
+        var all = await users.GetAll();
+        return Ok(all.Select(u => new { u.Id, u.Name, u.Email, u.Role, u.DriverId, u.CreatedAt }));
+    }
+
     /// <summary>
     /// The very first user can self-register (bootstrap) and is forced to Owner;
     /// after that, only an Owner can create accounts.

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import {
   BarChart3, Building2, CalendarDays, ChevronDown, ChevronLeft, ClipboardList,
-  Database, Flame, Fuel, LogOut, Receipt, Route, ShoppingCart, Tag, Truck, User, Users, Wallet,
+  Database, Flame, Fuel, LogOut, Receipt, Route, ShoppingCart, Tag, Truck, User, UserPlus, Users, Wallet,
 } from "lucide-react";
 import { useAuth } from "./auth";
 
@@ -14,6 +14,7 @@ export const NAV_ACCESS = {
   masterdata: ["Owner", "Dispatch"],
   discounts: ["Owner", "Accountant"],
   reports: ["Owner", "Dispatch", "Accountant"],
+  team: ["Owner"],
 };
 
 export const MASTER_DATA_ITEMS = [
@@ -47,7 +48,10 @@ export default function Sidebar({ tab, setTab, open, setOpen, openGroups, setOpe
     { id: "orders", label: "Orders", icon: ClipboardList },
     { id: "dispatch", label: "Dispatch", icon: Route },
   ].filter((i) => hasAccess(i.id));
-  const trailingItems = [{ id: "discounts", label: "Pricing", icon: Tag }].filter((i) => hasAccess(i.id));
+  const trailingItems = [
+    { id: "discounts", label: "Pricing", icon: Tag },
+    { id: "team", label: "Team", icon: UserPlus },
+  ].filter((i) => hasAccess(i.id));
   const groups = [
     { id: "masterdata", label: "Master Data", icon: Database, items: MASTER_DATA_ITEMS },
     { id: "reports", label: "Reports", icon: BarChart3, items: REPORT_ITEMS },

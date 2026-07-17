@@ -11,6 +11,7 @@ import DispatchTab from "./tabs/Dispatch";
 import { CustomersTab, CylindersTab, DriversTab, TrucksTab, VendorsTab } from "./tabs/MasterData";
 import PricingTab from "./tabs/Pricing";
 import ReportsTab from "./tabs/Reports";
+import TeamTab from "./tabs/Team";
 
 const ToastContext = createContext(() => {});
 export const useToast = () => useContext(ToastContext);
@@ -157,6 +158,7 @@ function Shell() {
             {tab === "vendors" && hasAccess("vendors") && <VendorsTab {...ctx} />}
             {tab === "customers" && hasAccess("customers") && <CustomersTab {...ctx} />}
             {tab === "discounts" && hasAccess("discounts") && <PricingTab {...ctx} />}
+            {tab === "team" && hasAccess("team") && <TeamTab {...ctx} />}
             {tab.startsWith("reports-") && hasAccess("reports") && <ReportsTab {...ctx} section={tab.replace("reports-", "")} />}
           </div>
         </div>

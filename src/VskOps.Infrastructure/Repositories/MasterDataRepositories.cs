@@ -207,6 +207,12 @@ public class UserRepository(IDbConnectionFactory db)
         return await conn.QuerySingleOrDefaultAsync<User>("SELECT * FROM Users WHERE Email = @email", new { email });
     }
 
+    public async Task<IReadOnlyList<User>> GetAll()
+    {
+        using var conn = db.Create();
+        return (await conn.QueryAsync<User>("SELECT * FROM Users ORDER BY Name")).ToList();
+    }
+
     public async Task<int> Insert(User u)
     {
         using var conn = db.Create();
