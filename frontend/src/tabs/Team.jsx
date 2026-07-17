@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Plus } from "lucide-react";
+import { KeyRound, Plus } from "lucide-react";
 import { api, tryGet } from "../api";
 import { useToast } from "../App";
 import { byId, useLoad } from "../hooks";
-import { Badge, Btn, Empty, Field, inputCls, Panel, Row } from "../ui";
+import { Badge, Btn, Empty, Field, inputCls, Panel, Row, LoadError } from "../ui";
 
 const ROLES = ["Owner", "Dispatch", "Accountant", "Driver"];
 const ROLE_BLURB = {
@@ -18,7 +18,7 @@ const ROLE_TONE = { Owner: "flame", Dispatch: "teal", Accountant: "warn", Driver
  *  once the first account exists — this is the screen that uses it). */
 export default function TeamTab() {
   const notify = useToast();
-  const { data, loading, reload } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [users, drivers] = await Promise.all([api.get("/api/auth/users"), tryGet("/api/drivers", [])]);
     return { users, drivers };
   });
@@ -27,6 +27,7 @@ export default function TeamTab() {
   const [busy, setBusy] = useState(false);
 
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading team…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { users, drivers } = data;
   const driverById = byId(drivers);
 
@@ -87,18 +88,59 @@ export default function TeamTab() {
         {users.length === 0 ? <Empty text="No accounts yet." /> : (
           <div className="space-y-2">
             {users.map((u) => (
-              <Row key={u.id}>
-                <div className="font-medium">{u.name}</div>
-                <div className="text-[12px] text-[#8FA0AC] font-mono">{u.email}</div>
-                <div className="flex gap-2 mt-1">
-                  <Badge tone={ROLE_TONE[u.role]}>{u.role}</Badge>
-                  {u.driverId && <Badge tone="muted">Driver: {driverById[u.driverId]?.name ?? u.driverId}</Badge>}
-                </div>
-              </Row>
+              <UserRow key={u.id} user={u} driverName={u.driverId ? driverById[u.driverId]?.name ?? u.driverId : null} />
             ))}
           </div>
         )}
       </Panel>
     </div>
+  );
+}
+
+/** One account row with an expandable Owner-driven password reset. */
+function UserRow({ user: u, driverName }) {
+  const notify = useToast();
+  const [resetting, setResetting] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const reset = async () => {
+    setBusy(true);
+    try {
+      await api.put(`/api/auth/users/${u.id}/password`, { newPassword });
+      notify(`Password updated for ${u.name}.`);
+      setNewPassword("");
+      setResetting(false);
+    } catch (e) {
+      notify(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Row>
+      <div className="font-medium">{u.name}</div>
+      <div className="text-[12px] text-[#8FA0AC] font-mono">{u.email}</div>
+      <div className="flex gap-2 mt-1 items-center flex-wrap">
+        <Badge tone={ROLE_TONE[u.role]}>{u.role}</Badge>
+        {driverName && <Badge tone="muted">Driver: {driverName}</Badge>}
+        <Btn tone="ghost" onClick={() => { setResetting((r) => !r); setNewPassword(""); }}>
+          <KeyRound size={13} /> {resetting ? "Cancel" : "Reset password"}
+        </Btn>
+      </div>
+      {resetting && (
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="password"
+            className={`${inputCls} w-44`}
+            placeholder="New password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <Btn tone="teal" disabled={busy || !newPassword} onClick={reset}>Save</Btn>
+        </div>
+      )}
+    </Row>
   );
 }

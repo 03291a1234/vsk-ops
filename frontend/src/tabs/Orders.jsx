@@ -6,13 +6,13 @@ import { useAuth } from "../auth";
 import { byId, useLoad } from "../hooks";
 import {
   Badge, Btn, cylLabel, DateInput, dueOf, Empty, Field, formatDateIST, inputCls,
-  ORDER_STAGES, OWNERS, Panel, PAYMENT_METHODS, paymentStatusOf, Pipeline, todayStr, totalPaid,
+  ORDER_STAGES, OWNERS, Panel, PAYMENT_METHODS, paymentStatusOf, Pipeline, todayStr, totalPaid, LoadError,
 } from "../ui";
 
 export default function OrdersTab({ setTab, focusOrderId, setFocusOrderId }) {
   const notify = useToast();
   const { profile } = useAuth();
-  const { data, loading, reload } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [orders, customers, types] = await Promise.all([
       api.get("/api/orders"),
       api.get("/api/customers").catch(() => []), // Accountant can't read customers master — names degrade to ids
@@ -35,6 +35,7 @@ export default function OrdersTab({ setTab, focusOrderId, setFocusOrderId }) {
   });
 
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading orders…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { orders, customers, types } = data;
   const customerById = byId(customers);
   const typeById = byId(types);

@@ -131,6 +131,14 @@ export const Stat = ({ label, value, tone }) => {
   );
 };
 
+/** Shown when a tab's data load fails — most often the free-tier API waking from sleep. */
+export const LoadError = ({ error, onRetry }) => (
+  <div className="flex items-center gap-3 flex-wrap text-sm text-[#FF8A8A] bg-[#FF5D5D]/10 border border-[#FF5D5D]/30 rounded-lg px-4 py-3">
+    <span className="flex-1 min-w-0">Couldn't load data — the server may just be waking up. ({String(error)})</span>
+    {onRetry && <Btn tone="ghost" onClick={onRetry}>Retry</Btn>}
+  </div>
+);
+
 export const Empty = ({ text, action, actionLabel }) => (
   <div className="text-center py-8">
     <AlertTriangle size={22} className="mx-auto text-[#4B5661] mb-2" />

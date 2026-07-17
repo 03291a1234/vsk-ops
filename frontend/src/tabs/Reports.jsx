@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { api } from "../api";
 import { useToast, FlowNav } from "../App";
 import { useLoad } from "../hooks";
-import { Badge, Btn, DateInput, Empty, Field, formatDateIST, formatDateTimeIST, inputCls, Panel, Stat, todayStr } from "../ui";
+import { Badge, Btn, DateInput, Empty, Field, formatDateIST, formatDateTimeIST, inputCls, Panel, Stat, todayStr, LoadError } from "../ui";
 
 const daysAgoStr = (n) => todayStr(new Date(Date.now() - n * 86400000));
 
@@ -60,8 +60,9 @@ export default function ReportsTab({ setTab, section = "daily" }) {
 }
 
 function DailySection({ date }) {
-  const { data, loading, error } = useLoad(() => api.get(`/api/reports/daily?date=${date}`), [date]);
+  const { data, loading, error, reload } = useLoad(() => api.get(`/api/reports/daily?date=${date}`), [date]);
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   if (error) return <div className="text-sm text-[#FF8A8A]">{error}</div>;
   return (
     <Panel eyebrow="Daily Report" title="Summary">
@@ -79,8 +80,9 @@ function DailySection({ date }) {
 }
 
 function ByTypeSection({ date }) {
-  const { data: rows, loading } = useLoad(() => api.get(`/api/reports/by-type?date=${date}`), [date]);
+  const { data: rows, loading, error, reload } = useLoad(() => api.get(`/api/reports/by-type?date=${date}`), [date]);
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const hasData = rows.some((r) => r.filled || r.empty || r.defect);
   return (
     <Panel eyebrow="By Cylinder Type" title="Filled (net of defects) / Empty / Defect — company-wide">
@@ -203,8 +205,9 @@ function CustomerLedgerGroup({ group, dueLabel, showRate, onInvoice }) {
 }
 
 function LedgerSection({ date, onInvoice }) {
-  const { data: groups, loading } = useLoad(() => api.get(`/api/reports/ledger?date=${date}`), [date]);
+  const { data: groups, loading, error, reload } = useLoad(() => api.get(`/api/reports/ledger?date=${date}`), [date]);
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   return (
     <Panel eyebrow="Per Customer" title="Cylinder Movement & Payments"
       right={<span className="text-[11px] text-[#5C6975] font-mono">Click a customer to expand their cylinder-type breakdown</span>}>
@@ -218,8 +221,9 @@ function LedgerSection({ date, onInvoice }) {
 }
 
 function CashSection({ date }) {
-  const { data, loading } = useLoad(() => api.get(`/api/reports/cash-collection?date=${date}`), [date]);
+  const { data, loading, error, reload } = useLoad(() => api.get(`/api/reports/cash-collection?date=${date}`), [date]);
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { rows, totalCashToHandOver } = data;
   return (
     <Panel eyebrow="Cash Collection" title="Driver & Truck Handover to Owner"
@@ -269,7 +273,7 @@ function MultiDaySection({
   rangeStartInput, setRangeStartInput, rangeEndInput, setRangeEndInput,
   customerFilter, setCustomerFilter, onInvoice,
 }) {
-  const { data, loading } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const filter = customerFilter ? `&customerId=${customerFilter}` : "";
     const [groups, customers] = await Promise.all([
       api.get(`/api/reports/multi-day?start=${rangeStart}&end=${rangeEnd}${filter}`),
@@ -279,6 +283,7 @@ function MultiDaySection({
   }, [rangeStart, rangeEnd, customerFilter]);
 
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { groups, customers } = data;
 
   const totals = groups.reduce(

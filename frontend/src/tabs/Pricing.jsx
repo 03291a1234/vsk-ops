@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { api, tryGet } from "../api";
 import { useToast } from "../App";
 import { byId, useLoad } from "../hooks";
-import { Badge, Btn, cylLabel, DateInput, Empty, Field, formatDateIST, inputCls, Panel, Row, todayStr } from "../ui";
+import { Badge, Btn, cylLabel, DateInput, Empty, Field, formatDateIST, inputCls, Panel, Row, todayStr, LoadError } from "../ui";
 
 const currentMrp = (mrpHistory, cylinderTypeId, dateStr) => {
   const valid = mrpHistory
@@ -14,7 +14,7 @@ const currentMrp = (mrpHistory, cylinderTypeId, dateStr) => {
 
 export default function PricingTab() {
   const notify = useToast();
-  const { data, loading, reload } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [types, mrpHistory, discounts, customers] = await Promise.all([
       api.get("/api/cylinder-types"),
       api.get("/api/pricing/mrp"),
@@ -28,6 +28,7 @@ export default function PricingTab() {
   const [df, setDf] = useState({ customerId: "", cylinderTypeId: "", amount: "", startDate: todayStr(), endDate: todayStr() });
 
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading pricing…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { types, mrpHistory, discounts, customers } = data;
   const typeById = byId(types);
   const customerById = byId(customers);

@@ -8,6 +8,7 @@ using VskOps.Infrastructure.Repositories;
 namespace VskOps.Api.Controllers;
 
 public record RegisterRequest(string Name, string Email, string Password, string Role, int? DriverId);
+public record ResetPasswordRequest(string NewPassword);
 public record LoginRequest(string Email, string Password);
 public record LoginResponse(string Token, string Name, string Role, int? DriverId);
 
@@ -19,6 +20,18 @@ public class AuthController(
     JwtTokenService tokens) : ControllerBase
 {
     private static readonly string[] ValidRoles = [Roles.Owner, Roles.Dispatch, Roles.Accountant, Roles.Driver];
+
+    /// <summary>Owner resets any account's password (there is no self-service flow yet).</summary>
+    [HttpPut("users/{id:int}/password")]
+    [Authorize(Roles = Roles.Owner)]
+    public async Task<ActionResult> ResetPassword(int id, ResetPasswordRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.NewPassword)) return BadRequest("Password is required.");
+        var user = await users.GetById(id);
+        if (user is null) return NotFound();
+        await users.UpdatePasswordHash(id, hasher.HashPassword(user, req.NewPassword));
+        return NoContent();
+    }
 
     /// <summary>All accounts — the Owner's Team page.</summary>
     [HttpGet("users")]

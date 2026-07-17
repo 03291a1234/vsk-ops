@@ -3,7 +3,7 @@ import { ArrowRight, Plus, Trash2 } from "lucide-react";
 import { api } from "../api";
 import { useToast } from "../App";
 import { byId, useLoad } from "../hooks";
-import { Badge, Btn, cylLabel, DateInput, Empty, Field, formatDateIST, inputCls, Panel, Row, Stat, todayStr } from "../ui";
+import { Badge, Btn, cylLabel, DateInput, Empty, Field, formatDateIST, inputCls, Panel, Row, Stat, todayStr, LoadError } from "../ui";
 
 /** Generic add-form + roster layout shared by the simple master-data pages. */
 function CrudPage({ eyebrow, addTitle, listTitle, form, list }) {
@@ -17,10 +17,11 @@ function CrudPage({ eyebrow, addTitle, listTitle, form, list }) {
 
 export function DriversTab() {
   const notify = useToast();
-  const { data: drivers, loading, reload } = useLoad(() => api.get("/api/drivers"));
+  const { data: drivers, loading, error, reload } = useLoad(() => api.get("/api/drivers"));
   const [f, setF] = useState({ name: "", phone: "", license: "" });
 
   if (loading) return null;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const add = async () => {
     try {
       await api.post("/api/drivers", f);
@@ -59,13 +60,14 @@ export function DriversTab() {
 
 export function TrucksTab() {
   const notify = useToast();
-  const { data, loading, reload } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [trucks, drivers] = await Promise.all([api.get("/api/trucks"), api.get("/api/drivers")]);
     return { trucks, drivers };
   });
   const [f, setF] = useState({ regNo: "", capacity: "", driverId: "" });
 
   if (loading) return null;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { trucks, drivers } = data;
   const driverById = byId(drivers);
   const add = async () => {
@@ -111,10 +113,11 @@ export function TrucksTab() {
 
 export function VendorsTab() {
   const notify = useToast();
-  const { data: vendors, loading, reload } = useLoad(() => api.get("/api/vendors"));
+  const { data: vendors, loading, error, reload } = useLoad(() => api.get("/api/vendors"));
   const [f, setF] = useState({ name: "", phone: "", address: "" });
 
   if (loading) return null;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const add = async () => {
     try {
       await api.post("/api/vendors", f);
@@ -153,7 +156,7 @@ export function VendorsTab() {
 
 export function CustomersTab({ setTab }) {
   const notify = useToast();
-  const { data, loading, reload } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [customers, types] = await Promise.all([api.get("/api/customers"), api.get("/api/cylinder-types")]);
     return { customers, types };
   });
@@ -161,6 +164,7 @@ export function CustomersTab({ setTab }) {
   const [f, setF] = useState(empty);
 
   if (loading) return null;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { customers, types } = data;
   const typeById = byId(types);
   const add = async () => {
@@ -239,7 +243,7 @@ export function CustomersTab({ setTab }) {
 
 export function CylindersTab() {
   const notify = useToast();
-  const { data, loading, reload } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [types, inventory, vendors, iocl] = await Promise.all([
       api.get("/api/cylinder-types"),
       api.get("/api/cylinder-types/inventory"),
@@ -251,6 +255,7 @@ export function CylindersTab() {
   const [f, setF] = useState({ name: "", weight: "" });
 
   if (loading) return null;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { types, inventory, vendors, iocl } = data;
   const add = async () => {
     try {

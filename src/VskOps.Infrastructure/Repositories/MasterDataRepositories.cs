@@ -213,6 +213,18 @@ public class UserRepository(IDbConnectionFactory db)
         return (await conn.QueryAsync<User>("SELECT * FROM Users ORDER BY Name")).ToList();
     }
 
+    public async Task<User?> GetById(int id)
+    {
+        using var conn = db.Create();
+        return await conn.QuerySingleOrDefaultAsync<User>("SELECT * FROM Users WHERE Id = @id", new { id });
+    }
+
+    public async Task UpdatePasswordHash(int id, string passwordHash)
+    {
+        using var conn = db.Create();
+        await conn.ExecuteAsync("UPDATE Users SET PasswordHash = @passwordHash WHERE Id = @id", new { id, passwordHash });
+    }
+
     public async Task<int> Insert(User u)
     {
         using var conn = db.Create();

@@ -6,7 +6,7 @@ import { useAuth } from "../auth";
 import { byId, useLoad } from "../hooks";
 import {
   Badge, Btn, cylLabel, dueOf, Empty, Field, inputCls, itemsSummary,
-  Panel, paymentStatusOf, Pipeline, TRIP_STAGES,
+  Panel, paymentStatusOf, Pipeline, TRIP_STAGES, LoadError,
 } from "../ui";
 
 export default function DispatchTab({ setTab, goToOrderPayment }) {
@@ -14,7 +14,7 @@ export default function DispatchTab({ setTab, goToOrderPayment }) {
   const { profile } = useAuth();
   const isDriver = profile.role === "Driver";
 
-  const { data, loading, reload } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [trips, drivers, trucks, types, customers, orders] = await Promise.all([
       api.get("/api/trips"), // server scopes drivers to their own trips
       tryGet("/api/drivers", []),
@@ -31,6 +31,7 @@ export default function DispatchTab({ setTab, goToOrderPayment }) {
   const [selected, setSelected] = useState([]);
 
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading dispatch…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { trips, drivers, trucks, types, customers, orders } = data;
   const typeById = byId(types);
   const customerById = byId(customers);

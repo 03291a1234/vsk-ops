@@ -3,7 +3,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { api, tryGet } from "../api";
 import { useToast, FlowNav } from "../App";
 import { byId, useLoad } from "../hooks";
-import { Badge, Btn, cylLabel, DateInput, Empty, Field, inputCls, Panel, todayStr } from "../ui";
+import { Badge, Btn, cylLabel, DateInput, Empty, Field, inputCls, Panel, todayStr, LoadError } from "../ui";
 
 /* Client-side pricing preview — mirrors of the server rules (Pricing.cs). The server recomputes
    authoritatively on create; this is display only, and only for roles allowed to read pricing. */
@@ -22,7 +22,7 @@ const applicableDiscount = (discounts, customerId, cylinderTypeId, dateStr) => {
 
 export default function NewOrderTab({ setTab }) {
   const notify = useToast();
-  const { data, loading } = useLoad(async () => {
+  const { data, loading, error, reload } = useLoad(async () => {
     const [customers, types, mrpHistory, discounts] = await Promise.all([
       api.get("/api/customers"),
       api.get("/api/cylinder-types"),
@@ -47,6 +47,7 @@ export default function NewOrderTab({ setTab }) {
   }, [customerId]);
 
   if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (error) return <LoadError error={error} onRetry={reload} />;
   const { customers, types, mrpHistory, discounts } = data;
   const typeById = byId(types);
   const canPreview = mrpHistory !== null && discounts !== null;

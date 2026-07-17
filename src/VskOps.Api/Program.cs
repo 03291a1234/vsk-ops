@@ -90,7 +90,30 @@ builder.Services.AddSwaggerGen(o =>
 var app = builder.Build();
 
 if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
-    DatabaseMigrator.MigrateToLatest(connectionString);
+{
+    // Azure SQL throws transient connection timeouts, especially on cold starts — retry, and if
+    // migration still can't run, start anyway rather than crash-looping the whole app: on an
+    // already-migrated database this check is a no-op, and a genuinely missing schema will
+    // surface loudly on the first data request.
+    for (var attempt = 1; ; attempt++)
+    {
+        try
+        {
+            DatabaseMigrator.MigrateToLatest(connectionString);
+            break;
+        }
+        catch (Exception ex) when (attempt < 4)
+        {
+            app.Logger.LogWarning(ex, "Startup migration attempt {Attempt}/4 failed; retrying in 10s.", attempt);
+            await Task.Delay(TimeSpan.FromSeconds(10));
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "Startup migration failed after 4 attempts — starting without it.");
+            break;
+        }
+    }
+}
 
 app.UseSwagger();
 app.UseSwaggerUI(o =>
