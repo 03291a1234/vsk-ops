@@ -1,5 +1,5 @@
 using System.Data;
-using Microsoft.Data.SqlClient;
+using Npgsql;
 
 namespace VskOps.Infrastructure;
 
@@ -8,7 +8,9 @@ public interface IDbConnectionFactory
     IDbConnection Create();
 }
 
-public class SqlConnectionFactory(string connectionString) : IDbConnectionFactory
+public class PostgresConnectionFactory(string connectionString) : IDbConnectionFactory
 {
-    public IDbConnection Create() => new SqlConnection(connectionString);
+    static PostgresConnectionFactory() => DapperConfig.EnsureInitialized();
+
+    public IDbConnection Create() => new NpgsqlConnection(connectionString);
 }

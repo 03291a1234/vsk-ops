@@ -19,12 +19,12 @@ public class TripRepository(IDbConnectionFactory db)
 
         var ids = trips.Select(t => t.Id).ToArray();
         var stops = (await conn.QueryAsync<TripStop>(
-            "SELECT * FROM TripStops WHERE TripId IN @ids ORDER BY Seq", new { ids })).ToList();
+            "SELECT * FROM TripStops WHERE TripId = ANY(@ids) ORDER BY Seq", new { ids })).ToList();
         var stopIds = stops.Select(s => s.Id).ToArray();
         var stopItems = stopIds.Length == 0
             ? []
             : (await conn.QueryAsync<TripStopItem>(
-                "SELECT * FROM TripStopItems WHERE TripStopId IN @stopIds", new { stopIds })).ToList();
+                "SELECT * FROM TripStopItems WHERE TripStopId = ANY(@stopIds)", new { stopIds })).ToList();
 
         var stopsById = stops.ToDictionary(s => s.Id);
         foreach (var si in stopItems) stopsById[si.TripStopId].Items.Add(si);
@@ -47,10 +47,11 @@ public class TripRepository(IDbConnectionFactory db)
         using var tx = conn.BeginTransaction();
 
         var tripId = await conn.ExecuteScalarAsync<int>(
-            "INSERT INTO Trips (DriverId, TruckId, Stage) OUTPUT INSERTED.Id VALUES (@driverId, @truckId, 0)",
+            "INSERT INTO Trips (DriverId, TruckId, Stage) VALUES (@driverId, @truckId, 0) RETURNING Id",
             new { driverId, truckId }, tx);
         await conn.ExecuteAsync(
-            "UPDATE Orders SET Stage = 2, TripId = @tripId WHERE Id IN @orderIds", new { tripId, orderIds }, tx);
+            "UPDATE Orders SET Stage = 2, TripId = @tripId WHERE Id = ANY(@orderIds)",
+            new { tripId, orderIds = orderIds.ToArray() }, tx);
         foreach (var orderId in orderIds)
             await conn.ExecuteAsync(
                 "INSERT INTO OrderHistory (OrderId, Stage) VALUES (@orderId, @label)",
@@ -77,7 +78,7 @@ public class TripRepository(IDbConnectionFactory db)
             await conn.ExecuteAsync(
                 """
                 INSERT INTO TripStops (TripId, OrderId, Seq, Lat, Lng, DistanceKm, EtaMin, Delivered)
-                VALUES (@tripId, @OrderId, @seq, @Lat, @Lng, @DistanceKm, @EtaMin, 0)
+                VALUES (@tripId, @OrderId, @seq, @Lat, @Lng, @DistanceKm, @EtaMin, FALSE)
                 """, new { tripId, stop.OrderId, seq = ++seq, stop.Lat, stop.Lng, stop.DistanceKm, stop.EtaMin }, tx);
 
         foreach (var (cylinderTypeId, qty) in loadQtyByType)
@@ -111,13 +112,13 @@ public class TripRepository(IDbConnectionFactory db)
                 VALUES (@OrderId, @CylinderTypeId, @Qty, @Price, @Amount, @Date)
                 """, p, tx);
         await conn.ExecuteAsync(
-            "UPDATE Orders SET Stage = 3, Amount = @amount, DeliveredAt = SYSUTCDATETIME() WHERE Id = @orderId",
+            "UPDATE Orders SET Stage = 3, Amount = @amount, DeliveredAt = now() WHERE Id = @orderId",
             new { orderId, amount = outcome.NewOrderAmount }, tx);
         await conn.ExecuteAsync(
             "INSERT INTO OrderHistory (OrderId, Stage) VALUES (@orderId, 'Delivered')", new { orderId }, tx);
 
         await conn.ExecuteAsync(
-            "UPDATE TripStops SET Delivered = 1, DeliveredAt = SYSUTCDATETIME() WHERE Id = @stopId", new { stopId }, tx);
+            "UPDATE TripStops SET Delivered = TRUE, DeliveredAt = now() WHERE Id = @stopId", new { stopId }, tx);
         foreach (var it in outcome.ReconciledItems)
             await conn.ExecuteAsync(
                 """
@@ -133,7 +134,7 @@ public class TripRepository(IDbConnectionFactory db)
             await AdjustInventoryInTx(conn, tx, cylinderTypeId, full: 0, empty: credit.Empty, defective: credit.Defective);
 
         var undelivered = await conn.ExecuteScalarAsync<int>(
-            "SELECT COUNT(1) FROM TripStops WHERE TripId = @tripId AND Delivered = 0", new { tripId }, tx);
+            "SELECT COUNT(1) FROM TripStops WHERE TripId = @tripId AND Delivered = FALSE", new { tripId }, tx);
         var completed = undelivered == 0;
         if (completed)
         {
@@ -152,12 +153,12 @@ public class TripRepository(IDbConnectionFactory db)
         var updated = await conn.ExecuteAsync(
             """
             UPDATE Inventory
-            SET [Full] = [Full] + @full, Empty = Empty + @empty, Defective = Defective + @defective, UpdatedAt = SYSUTCDATETIME()
+            SET "Full" = "Full" + @full, Empty = Empty + @empty, Defective = Defective + @defective, UpdatedAt = now()
             WHERE CylinderTypeId = @cylinderTypeId
             """, new { cylinderTypeId, full, empty, defective }, tx);
         if (updated == 0)
             await conn.ExecuteAsync(
-                "INSERT INTO Inventory (CylinderTypeId, [Full], Empty, Defective) VALUES (@cylinderTypeId, @full, @empty, @defective)",
+                """INSERT INTO Inventory (CylinderTypeId, "Full", Empty, Defective) VALUES (@cylinderTypeId, @full, @empty, @defective)""",
                 new { cylinderTypeId, full, empty, defective }, tx);
     }
 }

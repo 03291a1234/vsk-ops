@@ -20,7 +20,7 @@ if (string.IsNullOrWhiteSpace(jwtSettings.Key))
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddSingleton<IDbConnectionFactory>(new SqlConnectionFactory(connectionString));
+builder.Services.AddSingleton<IDbConnectionFactory>(new PostgresConnectionFactory(connectionString));
 
 builder.Services.AddSingleton<DriverRepository>();
 builder.Services.AddSingleton<TruckRepository>();

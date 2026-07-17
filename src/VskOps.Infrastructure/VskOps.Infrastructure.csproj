@@ -8,8 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.1" />
-    <PackageReference Include="dbup-sqlserver" Version="5.0.40" />
+    <PackageReference Include="Npgsql" Version="8.0.5" />
+    <PackageReference Include="dbup-postgresql" Version="5.0.40" />
   </ItemGroup>
 
   <ItemGroup>
