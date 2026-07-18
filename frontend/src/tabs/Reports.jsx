@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { api } from "../api";
 import { useToast, FlowNav } from "../App";
 import { useLoad } from "../hooks";
+import { useTheme } from "../theme";
 import { Badge, Btn, DateInput, Empty, Field, formatDateIST, formatDateTimeIST, inputCls, Panel, Stat, todayStr, LoadError } from "../ui";
 
 const daysAgoStr = (n) => todayStr(new Date(Date.now() - n * 86400000));
@@ -23,10 +24,10 @@ export default function ReportsTab({ setTab, section = "daily" }) {
     <div className="space-y-6">
       <FlowNav current={`reports-${section}`} setTab={setTab} />
       {section !== "multiday" && (
-        <div className="flex items-center justify-between bg-[#171D22] border border-[#262E35] rounded-xl px-5 py-3">
+        <div className="flex items-center justify-between bg-[var(--c-panel)] border border-[var(--c-border)] rounded-xl px-5 py-3">
           <div>
-            <div className="text-[10px] tracking-[0.18em] uppercase text-[#5C6975] font-mono mb-0.5">Report Date</div>
-            <div className="text-[#E7ECEF] font-semibold text-[15px]" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>{formatDateIST(date)}</div>
+            <div className="text-[10px] tracking-[0.18em] uppercase text-[var(--c-text-dim)] font-mono mb-0.5">Report Date</div>
+            <div className="text-[var(--c-text)] font-semibold text-[15px]" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>{formatDateIST(date)}</div>
           </div>
           <DateInput value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
@@ -61,7 +62,7 @@ export default function ReportsTab({ setTab, section = "daily" }) {
 
 function DailySection({ date }) {
   const { data, loading, error, reload } = useLoad(() => api.get(`/api/reports/daily?date=${date}`), [date]);
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   if (error) return <div className="text-sm text-[#FF8A8A]">{error}</div>;
   return (
@@ -72,7 +73,7 @@ function DailySection({ date }) {
         <Stat label="Defects Logged" value={data.defects} tone="bad" />
         <Stat label="Outstanding Ledger (₹)" value={data.outstandingLedger} tone="warn" />
       </div>
-      <div className="text-[11px] text-[#4B5661] font-mono mt-3">
+      <div className="text-[11px] text-[var(--c-text-faint)] font-mono mt-3">
         "Filled" already excludes defective units — defective cylinders found at delivery are logged separately and not counted as full.
       </div>
     </Panel>
@@ -80,10 +81,16 @@ function DailySection({ date }) {
 }
 
 function ByTypeSection({ date }) {
+  const { theme } = useTheme();
   const { data: rows, loading, error, reload } = useLoad(() => api.get(`/api/reports/by-type?date=${date}`), [date]);
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const hasData = rows.some((r) => r.filled || r.empty || r.defect);
+  // recharts takes plain color props (SVG attrs can't read CSS vars), so pick per theme
+  const light = theme === "light";
+  const gridColor = light ? "#E4E9EE" : "#262E35";
+  const axisColor = light ? "#7C8894" : "#5C6975";
+  const tipBg = light ? "#FFFFFF" : "#171D22";
   return (
     <Panel eyebrow="By Cylinder Type" title="Filled (net of defects) / Empty / Defect — company-wide">
       {!hasData ? (
@@ -93,7 +100,7 @@ function ByTypeSection({ date }) {
           <div className="overflow-x-auto mb-4">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wide text-[#5C6975] font-mono border-b border-[#262E35]">
+                <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--c-text-dim)] font-mono border-b border-[var(--c-border)]">
                   <th className="py-2 pr-4">Cylinder Type</th>
                   <th className="py-2 pr-4">Filled</th>
                   <th className="py-2 pr-4">Empty</th>
@@ -102,7 +109,7 @@ function ByTypeSection({ date }) {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.cylinderTypeId} className="border-b border-[#262E35]/60">
+                  <tr key={r.cylinderTypeId} className="border-b border-[var(--c-divider)]">
                     <td className="py-2 pr-4 font-medium">{r.label}</td>
                     <td className="py-2 pr-4 font-mono text-[#FF9A6E]">{r.filled}</td>
                     <td className="py-2 pr-4 font-mono text-[#22D3B0]">{r.empty}</td>
@@ -115,10 +122,10 @@ function ByTypeSection({ date }) {
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <BarChart data={rows.map((r) => ({ label: r.label, Filled: r.filled, Empty: r.empty, Defect: r.defect }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#262E35" />
-                <XAxis dataKey="label" stroke="#5C6975" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#5C6975" tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: "#171D22", border: "1px solid #262E35", borderRadius: 8, fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="label" stroke={axisColor} tick={{ fontSize: 11 }} />
+                <YAxis stroke={axisColor} tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: tipBg, border: `1px solid ${gridColor}`, borderRadius: 8, fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="Filled" fill="#FF7A45" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Empty" fill="#22D3B0" radius={[4, 4, 0, 0]} />
@@ -136,22 +143,22 @@ function ByTypeSection({ date }) {
 function CustomerLedgerGroup({ group, dueLabel, showRate, onInvoice }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="border border-[#262E35] rounded-lg overflow-hidden mb-3 last:mb-0">
+    <div className="border border-[var(--c-border)] rounded-lg overflow-hidden mb-3 last:mb-0">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-3 flex-wrap bg-[#0F1316] hover:bg-white/5 px-4 py-3 text-left transition"
+        className="w-full flex items-center justify-between gap-3 flex-wrap bg-[var(--c-page)] hover:bg-[var(--c-fill)] px-4 py-3 text-left transition"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <ChevronRight size={14} className={`text-[#5C6975] shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
-          <span className="font-medium text-[#E7ECEF] truncate">{group.customerName}</span>
+          <ChevronRight size={14} className={`text-[var(--c-text-dim)] shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
+          <span className="font-medium text-[var(--c-text)] truncate">{group.customerName}</span>
         </div>
         <div className="flex items-center gap-4 flex-wrap text-[12px] font-mono">
-          <span className="text-[#5C6975]">Total <span className="text-[#FF9A6E] font-semibold">₹{group.totalAmount}</span></span>
-          <span className="text-[#5C6975]">Cash <span className="text-[#DDE3E7]">₹{group.cash}</span></span>
-          <span className="text-[#5C6975]">Online <span className="text-[#DDE3E7]">₹{group.online}</span></span>
-          <span className="text-[#5C6975]">Paid <span className="text-[#22D3B0]">₹{group.paid}</span></span>
-          <span className="text-[#5C6975]">{dueLabel} <span className={group.ledgerBalance > 0 ? "text-[#FF5D5D]" : "text-[#3DD16F]"}>₹{group.ledgerBalance}</span></span>
+          <span className="text-[var(--c-text-dim)]">Total <span className="text-[#FF9A6E] font-semibold">₹{group.totalAmount}</span></span>
+          <span className="text-[var(--c-text-dim)]">Cash <span className="text-[var(--c-text-bright)]">₹{group.cash}</span></span>
+          <span className="text-[var(--c-text-dim)]">Online <span className="text-[var(--c-text-bright)]">₹{group.online}</span></span>
+          <span className="text-[var(--c-text-dim)]">Paid <span className="text-[#22D3B0]">₹{group.paid}</span></span>
+          <span className="text-[var(--c-text-dim)]">{dueLabel} <span className={group.ledgerBalance > 0 ? "text-[#FF5D5D]" : "text-[#3DD16F]"}>₹{group.ledgerBalance}</span></span>
           {group.ledgerBalance > 0 ? <Badge tone="warn">Outstanding</Badge> : <Badge tone="good">Settled</Badge>}
           <Btn tone="ghost" onClick={(e) => { e.stopPropagation(); onInvoice(group.customerId); }}>
             <Printer size={13} /> Invoice
@@ -159,10 +166,10 @@ function CustomerLedgerGroup({ group, dueLabel, showRate, onInvoice }) {
         </div>
       </button>
       {open && (
-        <div className="overflow-x-auto border-t border-[#262E35]">
+        <div className="overflow-x-auto border-t border-[var(--c-border)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-[#5C6975] font-mono border-b border-[#262E35]">
+              <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--c-text-dim)] font-mono border-b border-[var(--c-border)]">
                 <th className="py-2 px-4">Cylinder Type</th>
                 <th className="py-2 px-4">Ordered</th>
                 <th className="py-2 px-4">Delivered</th>
@@ -178,7 +185,7 @@ function CustomerLedgerGroup({ group, dueLabel, showRate, onInvoice }) {
             </thead>
             <tbody>
               {group.typeRows.map((tr) => (
-                <tr key={tr.cylinderTypeId} className="border-b border-[#262E35]/40 last:border-b-0">
+                <tr key={tr.cylinderTypeId} className="border-b border-[var(--c-divider)] last:border-b-0">
                   <td className="py-2 px-4">{tr.cylinderLabel}</td>
                   <td className="py-2 px-4 font-mono">{tr.orderedQty || "—"}</td>
                   <td className="py-2 px-4 font-mono">{tr.deliveredQty || "—"}</td>
@@ -206,11 +213,11 @@ function CustomerLedgerGroup({ group, dueLabel, showRate, onInvoice }) {
 
 function LedgerSection({ date, onInvoice }) {
   const { data: groups, loading, error, reload } = useLoad(() => api.get(`/api/reports/ledger?date=${date}`), [date]);
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   return (
     <Panel eyebrow="Per Customer" title="Cylinder Movement & Payments"
-      right={<span className="text-[11px] text-[#5C6975] font-mono">Click a customer to expand their cylinder-type breakdown</span>}>
+      right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">Click a customer to expand their cylinder-type breakdown</span>}>
       {groups.length === 0 ? (
         <Empty text="No customer activity for this date." />
       ) : (
@@ -222,12 +229,12 @@ function LedgerSection({ date, onInvoice }) {
 
 function CashSection({ date }) {
   const { data, loading, error, reload } = useLoad(() => api.get(`/api/reports/cash-collection?date=${date}`), [date]);
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const { rows, totalCashToHandOver } = data;
   return (
     <Panel eyebrow="Cash Collection" title="Driver & Truck Handover to Owner"
-      right={<span className="text-[11px] text-[#5C6975] font-mono">Cash collected from customers that a driver must hand over — Online payments settle directly</span>}>
+      right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">Cash collected from customers that a driver must hand over — Online payments settle directly</span>}>
       {rows.length === 0 ? (
         <Empty text="No cash or online payments collected by drivers on this date." />
       ) : (
@@ -235,7 +242,7 @@ function CashSection({ date }) {
           <div className="overflow-x-auto mb-4">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wide text-[#5C6975] font-mono border-b border-[#262E35]">
+                <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--c-text-dim)] font-mono border-b border-[var(--c-border)]">
                   <th className="py-2 pr-4">Driver</th>
                   <th className="py-2 pr-4">Truck(s)</th>
                   <th className="py-2 pr-4">Customers</th>
@@ -246,12 +253,12 @@ function CashSection({ date }) {
               </thead>
               <tbody>
                 {rows.map((d) => (
-                  <tr key={d.driverId} className="border-b border-[#262E35]/60">
+                  <tr key={d.driverId} className="border-b border-[var(--c-divider)]">
                     <td className="py-2 pr-4 font-medium">{d.driverName}</td>
                     <td className="py-2 pr-4 font-mono">{d.trucks}</td>
                     <td className="py-2 pr-4 font-mono">{d.customerCount}</td>
                     <td className="py-2 pr-4 font-mono text-[#FFC857]">{d.cash || "—"}</td>
-                    <td className="py-2 pr-4 font-mono text-[#5C6975]">{d.online || "—"}</td>
+                    <td className="py-2 pr-4 font-mono text-[var(--c-text-dim)]">{d.online || "—"}</td>
                     <td className="py-2 pr-4 font-mono text-[#22D3B0]">{d.total}</td>
                   </tr>
                 ))}
@@ -282,7 +289,7 @@ function MultiDaySection({
     return { groups, customers };
   }, [rangeStart, rangeEnd, customerFilter]);
 
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const { groups, customers } = data;
 
@@ -336,7 +343,7 @@ function MultiDaySection({
         <Stat label="Total Paid (₹)" value={totals.paid} tone="teal" />
         <Stat label="Outstanding as of range end (₹)" value={totals.outstanding} tone="bad" />
       </div>
-      <p className="text-[11px] text-[#4B5661] font-mono -mt-2 mb-4">
+      <p className="text-[11px] text-[var(--c-text-faint)] font-mono -mt-2 mb-4">
         "Empties at Customer" = Cylinders Filled − Empties Returned − Empties Purchased (+ opening balances) — cylinders delivered but not yet collected back or bought outright.
       </p>
 

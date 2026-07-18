@@ -46,7 +46,7 @@ export default function NewOrderTab({ setTab }) {
     api.get(`/api/customers/${customerId}/empties`).then(setEmpties).catch(() => setEmpties([]));
   }, [customerId]);
 
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const { customers, types, mrpHistory, discounts } = data;
   const typeById = byId(types);
@@ -107,7 +107,7 @@ export default function NewOrderTab({ setTab }) {
   return (
     <div className="max-w-xl mx-auto space-y-4">
       <FlowNav current="neworder" setTab={setTab} />
-      <Panel eyebrow="Sales" title="New Order" right={<span className="text-[11px] text-[#5C6975] font-mono">Add as many cylinder types as this order needs</span>}>
+      <Panel eyebrow="Sales" title="New Order" right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">Add as many cylinder types as this order needs</span>}>
         <div className="space-y-4">
           <Field label="Select Customer">
             <select className={inputCls} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
@@ -120,11 +120,11 @@ export default function NewOrderTab({ setTab }) {
           </Field>
 
           <div className="space-y-2">
-            <span className="text-[#8FA0AC] text-[12px] uppercase tracking-wide font-mono">Cylinder Types</span>
+            <span className="text-[var(--c-text-muted)] text-[12px] uppercase tracking-wide font-mono">Cylinder Types</span>
             {items.map((it, idx) => {
               const bd = lineBreakdown[idx];
               return (
-                <div key={idx} className="rounded-lg border border-[#262E35] bg-[#0F1316] p-3 space-y-2">
+                <div key={idx} className="rounded-lg border border-[var(--c-border)] bg-[var(--c-page)] p-3 space-y-2">
                   <div className="flex gap-2 items-end">
                     <select className={`${inputCls} flex-1`} value={it.cylinderTypeId} onChange={(e) => updateRow(idx, "cylinderTypeId", e.target.value)}>
                       <option value="">Choose a type…</option>
@@ -132,13 +132,13 @@ export default function NewOrderTab({ setTab }) {
                     </select>
                     <input type="number" min="1" className={`${inputCls} w-20`} value={it.qty} onChange={(e) => updateRow(idx, "qty", e.target.value)} />
                     {items.length > 1 && (
-                      <button onClick={() => setItems((r) => r.filter((_, i) => i !== idx))} className="text-[#5C6975] hover:text-[#FF5D5D] p-2">
+                      <button onClick={() => setItems((r) => r.filter((_, i) => i !== idx))} className="text-[var(--c-text-dim)] hover:text-[#FF5D5D] p-2">
                         <Trash2 size={15} />
                       </button>
                     )}
                   </div>
                   {bd && customerId && (
-                    <div className="text-[11px] font-mono flex flex-wrap gap-x-4 gap-y-0.5 text-[#5C6975]">
+                    <div className="text-[11px] font-mono flex flex-wrap gap-x-4 gap-y-0.5 text-[var(--c-text-dim)]">
                       <span>MRP ₹{bd.mrp}</span>
                       <span className={bd.discount > 0 ? "text-[#22D3B0]" : ""}>{bd.discount > 0 ? `Discount −₹${bd.discount}` : "No discount"}</span>
                       <span className="text-[#FF9A6E]">Rate ₹{bd.rate}</span>
@@ -154,9 +154,9 @@ export default function NewOrderTab({ setTab }) {
           </div>
 
           {customerId && purchasableTypes.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-[#262E35]">
-              <span className="text-[#8FA0AC] text-[12px] uppercase tracking-wide font-mono">Purchase Empty Cylinders (optional)</span>
-              <p className="text-[11px] text-[#4B5661]">
+            <div className="space-y-2 pt-2 border-t border-[var(--c-border)]">
+              <span className="text-[var(--c-text-muted)] text-[12px] uppercase tracking-wide font-mono">Purchase Empty Cylinders (optional)</span>
+              <p className="text-[11px] text-[var(--c-text-faint)]">
                 This customer is currently holding {purchasableTypes.map((x) => `${x.balance} × ${cylLabel(x.ct)}`).join(", ")} unreturned. They can buy some or all outright instead of returning them.
               </p>
               {purchases.map((p, idx) => {
@@ -165,19 +165,19 @@ export default function NewOrderTab({ setTab }) {
                   (x) => String(x.ct.id) === String(p.cylinderTypeId) || !purchases.some((pp, j) => j !== idx && String(pp.cylinderTypeId) === String(x.ct.id))
                 );
                 return (
-                  <div key={idx} className="rounded-lg border border-[#262E35] bg-[#0F1316] p-3 space-y-2">
+                  <div key={idx} className="rounded-lg border border-[var(--c-border)] bg-[var(--c-page)] p-3 space-y-2">
                     <div className="flex gap-2 items-end">
                       <select className={`${inputCls} flex-1`} value={p.cylinderTypeId} onChange={(e) => updatePurchase(idx, "cylinderTypeId", e.target.value)}>
                         <option value="">Choose a type…</option>
                         {availableTypes.map((x) => <option key={x.ct.id} value={x.ct.id}>{cylLabel(x.ct)} — {x.balance} held</option>)}
                       </select>
                       <input type="number" min="1" max={bd?.balance || undefined} className={`${inputCls} w-20`} value={p.qty} onChange={(e) => updatePurchase(idx, "qty", e.target.value)} />
-                      <button onClick={() => setPurchases((r) => r.filter((_, i) => i !== idx))} className="text-[#5C6975] hover:text-[#FF5D5D] p-2">
+                      <button onClick={() => setPurchases((r) => r.filter((_, i) => i !== idx))} className="text-[var(--c-text-dim)] hover:text-[#FF5D5D] p-2">
                         <Trash2 size={15} />
                       </button>
                     </div>
                     {bd && p.cylinderTypeId && (
-                      <div className="text-[11px] font-mono flex flex-wrap gap-x-4 gap-y-0.5 text-[#5C6975]">
+                      <div className="text-[11px] font-mono flex flex-wrap gap-x-4 gap-y-0.5 text-[var(--c-text-dim)]">
                         <span>Held: {bd.balance}</span>
                         <span>Empty price ₹{bd.price}</span>
                         <span className="text-[#22D3B0] font-semibold">Line total ₹{bd.amount}</span>
@@ -196,24 +196,24 @@ export default function NewOrderTab({ setTab }) {
           )}
 
           {canPreview && orderTotal > 0 && customerId && (
-            <div className="rounded-lg bg-[#0F1316] border border-[#FF7A45]/30 p-3 text-sm font-mono space-y-1">
+            <div className="rounded-lg bg-[var(--c-page)] border border-[#FF7A45]/30 p-3 text-sm font-mono space-y-1">
               {itemsTotal > 0 && (
-                <div className="flex justify-between text-[#5C6975]">
+                <div className="flex justify-between text-[var(--c-text-dim)]">
                   <span>Delivery ({validItems.reduce((a, i) => a + Number(i.qty), 0)} cyl)</span>
                   <span>₹{itemsTotal}</span>
                 </div>
               )}
-              {purchasesTotal > 0 && <div className="flex justify-between text-[#5C6975]"><span>Empty cylinder purchase</span><span>₹{purchasesTotal}</span></div>}
-              <div className="flex justify-between pt-1 border-t border-[#262E35]">
-                <span className="text-[#5C6975]">Order Total</span>
+              {purchasesTotal > 0 && <div className="flex justify-between text-[var(--c-text-dim)]"><span>Empty cylinder purchase</span><span>₹{purchasesTotal}</span></div>}
+              <div className="flex justify-between pt-1 border-t border-[var(--c-border)]">
+                <span className="text-[var(--c-text-dim)]">Order Total</span>
                 <span className="text-[#FF9A6E] font-semibold">₹{orderTotal}</span>
               </div>
             </div>
           )}
           {!canPreview && (
-            <p className="text-[11px] text-[#4B5661]">Rates are applied by the server at the customer's effective price for the order date.</p>
+            <p className="text-[11px] text-[var(--c-text-faint)]">Rates are applied by the server at the customer's effective price for the order date.</p>
           )}
-          <p className="text-[11px] text-[#4B5661]">Payment is recorded once the order is delivered — see the Orders tab after delivery.</p>
+          <p className="text-[11px] text-[var(--c-text-faint)]">Payment is recorded once the order is delivered — see the Orders tab after delivery.</p>
           <Btn tone="flame" onClick={place} disabled={busy || !customerId || (validItems.length === 0 && validPurchases.length === 0)} className="w-full justify-center">
             <Plus size={15} /> Place Order
           </Btn>
@@ -222,8 +222,8 @@ export default function NewOrderTab({ setTab }) {
 
       {placed && (
         <Panel eyebrow="Confirmation" title="Order Placed">
-          <div className="text-sm space-y-1 font-mono text-[#8FA0AC]">
-            <div>Order ID: <span className="text-[#E7ECEF]">#{placed.id}</span></div>
+          <div className="text-sm space-y-1 font-mono text-[var(--c-text-muted)]">
+            <div>Order ID: <span className="text-[var(--c-text)]">#{placed.id}</span></div>
             <div>Total: <span className="text-[#FF9A6E]">₹{placed.amount}</span></div>
             <div>Status: <Badge tone="warn">Pending owner approval</Badge></div>
           </div>

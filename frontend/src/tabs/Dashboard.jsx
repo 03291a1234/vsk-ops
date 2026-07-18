@@ -17,7 +17,7 @@ export default function Dashboard({ setTab }) {
     return { orders, trips, types, inventory, drivers, trucks };
   });
 
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading dashboard…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading dashboard…</div>;
   if (error) return <div className="text-sm text-[#FF8A8A]">{error}</div>;
 
   const { orders, trips, types, inventory, drivers, trucks } = data;
@@ -52,7 +52,7 @@ export default function Dashboard({ setTab }) {
             {types.map((ct) => {
               const rec = inventory.find((r) => r.cylinderTypeId === ct.id);
               return (
-                <div key={ct.id} className="bg-[#0F1316] border border-[#262E35] rounded-lg p-3">
+                <div key={ct.id} className="bg-[var(--c-page)] border border-[var(--c-border)] rounded-lg p-3">
                   <div className="text-sm font-medium mb-2">{cylLabel(ct)}</div>
                   <div className="flex gap-2 flex-wrap">
                     <Badge tone="flame">Full: {rec?.full ?? 0}</Badge>
@@ -74,10 +74,10 @@ export default function Dashboard({ setTab }) {
             {activeTrips.slice(0, 5).map((t) => (
               <div key={t.id}>
                 <div className="flex items-center justify-between text-sm mb-1.5">
-                  <span className="font-mono text-[#8FA0AC]">
+                  <span className="font-mono text-[var(--c-text-muted)]">
                     Trip #{t.id} · {driverById[t.driverId]?.name ?? "—"} · {truckById[t.truckId]?.regNo ?? "—"}
                   </span>
-                  <span className="text-[#5C6975]">{t.stops.length || "…"} stop(s)</span>
+                  <span className="text-[var(--c-text-dim)]">{t.stops.length || "…"} stop(s)</span>
                 </div>
                 <Pipeline stages={TRIP_STAGES} stageIndex={t.stage} />
               </div>

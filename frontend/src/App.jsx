@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Bell, ChevronRight, Menu, X } from "lucide-react";
 import { AuthProvider, LoginPage, useAuth } from "./auth";
+import { ThemeToggle } from "./theme";
 import Sidebar, { NAV_ACCESS, navGroupOf } from "./Sidebar";
 import { api, tryGet } from "./api";
 import { formatDateTimeIST } from "./ui";
@@ -34,12 +35,12 @@ export function FlowNav({ current, setTab }) {
             <button
               onClick={() => setTab(s.id)}
               className={`px-2.5 py-1 rounded-md text-[11px] font-mono border transition ${
-                active ? "bg-[#FF7A45]/15 text-[#FF9A6E] border-[#FF7A45]/30" : "bg-transparent text-[#5C6975] border-transparent hover:bg-white/5"
+                active ? "bg-[#FF7A45]/15 text-[#FF9A6E] border-[#FF7A45]/30" : "bg-transparent text-[var(--c-text-dim)] border-transparent hover:bg-[var(--c-fill)]"
               }`}
             >
               {s.label}
             </button>
-            {i < steps.length - 1 && <ChevronRight size={12} className="text-[#3A4550]" />}
+            {i < steps.length - 1 && <ChevronRight size={12} className="text-[var(--c-border-hover)]" />}
           </React.Fragment>
         );
       })}
@@ -64,25 +65,25 @@ function NotifBell() {
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen((o) => !o)} className="relative p-2 rounded-lg hover:bg-white/5 border border-[#262E35]">
-        <Bell size={17} className="text-[#8FA0AC]" />
+      <button onClick={() => setOpen((o) => !o)} className="relative p-2 rounded-lg hover:bg-[var(--c-fill)] border border-[var(--c-border)]">
+        <Bell size={17} className="text-[var(--c-text-muted)]" />
         {notifications.length > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF7A45] text-[10px] flex items-center justify-center text-[#0F1316] font-bold">
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF7A45] text-[10px] flex items-center justify-center text-[var(--c-page)] font-bold">
             {Math.min(notifications.length, 9)}
           </span>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[#171D22] border border-[#262E35] rounded-xl shadow-2xl z-30">
-          <div className="px-4 py-3 border-b border-[#262E35] flex items-center justify-between">
+        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[var(--c-panel)] border border-[var(--c-border)] rounded-xl shadow-2xl z-30">
+          <div className="px-4 py-3 border-b border-[var(--c-border)] flex items-center justify-between">
             <span className="text-sm font-medium">Notifications</span>
-            <button onClick={() => setOpen(false)}><X size={14} className="text-[#5C6975]" /></button>
+            <button onClick={() => setOpen(false)}><X size={14} className="text-[var(--c-text-dim)]" /></button>
           </div>
-          {notifications.length === 0 && <div className="p-4 text-sm text-[#5C6975]">No notifications yet.</div>}
+          {notifications.length === 0 && <div className="p-4 text-sm text-[var(--c-text-dim)]">No notifications yet.</div>}
           {notifications.map((n) => (
-            <div key={n.id} className="px-4 py-2.5 border-b border-[#262E35]/60 text-sm">
-              <div className="text-[10px] font-mono text-[#5C6975] uppercase">{n.audience} · {formatDateTimeIST(n.timestamp)} IST</div>
-              <div className="text-[#DDE3E7] mt-0.5">{n.message}</div>
+            <div key={n.id} className="px-4 py-2.5 border-b border-[var(--c-divider)] text-sm">
+              <div className="text-[10px] font-mono text-[var(--c-text-dim)] uppercase">{n.audience} · {formatDateTimeIST(n.timestamp)} IST</div>
+              <div className="text-[var(--c-text-bright)] mt-0.5">{n.message}</div>
             </div>
           ))}
         </div>
@@ -114,7 +115,7 @@ function Shell() {
 
   return (
     <ToastContext.Provider value={notify}>
-      <div className="min-h-screen bg-[#0F1316] text-[#E7ECEF] flex" style={{ fontFamily: "'Inter',sans-serif" }}>
+      <div className="min-h-screen bg-[var(--c-page)] text-[var(--c-text)] flex" style={{ fontFamily: "'Inter',sans-serif" }}>
         {/* Desktop: sticky sidebar. Mobile: hidden — replaced by the drawer below. */}
         <div className="hidden md:block">
           <Sidebar tab={tab} setTab={setTab} open={sidebarOpen} setOpen={setSidebarOpen} openGroups={openGroups} setOpenGroups={setOpenGroups} />
@@ -136,16 +137,19 @@ function Shell() {
         )}
 
         <div className="flex-1 min-w-0 flex flex-col">
-          <div className="border-b border-[#262E35] px-4 md:px-6 h-[72px] flex items-center justify-between md:justify-end gap-2 sticky top-0 bg-[#0F1316]/95 backdrop-blur z-20">
+          <div className="border-b border-[var(--c-border)] px-4 md:px-6 h-[72px] flex items-center justify-between md:justify-end gap-2 sticky top-0 bg-[var(--c-page)] backdrop-blur z-20">
             <button
               type="button"
               onClick={() => setMobileNav(true)}
               title="Open menu"
-              className="md:hidden p-2 rounded-lg hover:bg-white/5 border border-[#262E35] text-[#8FA0AC]"
+              className="md:hidden p-2 rounded-lg hover:bg-[var(--c-fill)] border border-[var(--c-border)] text-[var(--c-text-muted)]"
             >
               <Menu size={17} />
             </button>
-            <NotifBell />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <NotifBell />
+            </div>
           </div>
 
           <div className="p-4 md:p-6 max-w-6xl mx-auto w-full space-y-6">

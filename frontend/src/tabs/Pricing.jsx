@@ -27,7 +27,7 @@ export default function PricingTab() {
   const [mrpForm, setMrpForm] = useState({ cylinderTypeId: "", value: "", effectiveFrom: todayStr() });
   const [df, setDf] = useState({ customerId: "", cylinderTypeId: "", amount: "", startDate: todayStr(), endDate: todayStr() });
 
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading pricing…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading pricing…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const { types, mrpHistory, discounts, customers } = data;
   const typeById = byId(types);
@@ -70,7 +70,7 @@ export default function PricingTab() {
             const v = currentMrp(mrpHistory, ct.id, todayStr());
             return <Badge key={ct.id} tone={v ? "flame" : "bad"}>{cylLabel(ct)}: {v ? `₹${v}` : "not set"}</Badge>;
           })}
-          {types.length === 0 && <span className="text-sm text-[#5C6975]">Add a cylinder type first.</span>}
+          {types.length === 0 && <span className="text-sm text-[var(--c-text-dim)]">Add a cylinder type first.</span>}
         </div>
         <div className="grid sm:grid-cols-4 gap-3 items-end mb-4">
           <Field label="Cylinder Type">
@@ -94,7 +94,7 @@ export default function PricingTab() {
             {sortedHistory.map((h) => (
               <Row key={h.id}>
                 <div className="font-mono text-sm">
-                  {cylLabel(typeById[h.cylinderTypeId])} · ₹{h.value} <span className="text-[#5C6975]">from {formatDateIST(h.effectiveFrom)}</span>
+                  {cylLabel(typeById[h.cylinderTypeId])} · ₹{h.value} <span className="text-[var(--c-text-dim)]">from {formatDateIST(h.effectiveFrom)}</span>
                 </div>
               </Row>
             ))}
@@ -103,9 +103,9 @@ export default function PricingTab() {
       </Panel>
 
       <Panel eyebrow="Fixed per cylinder type · same for every customer" title="Empty Cylinder Purchase Price"
-        right={<span className="text-[11px] text-[#5C6975] font-mono">What a customer pays to keep/own an empty cylinder instead of returning it</span>}>
+        right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">What a customer pays to keep/own an empty cylinder instead of returning it</span>}>
         {types.length === 0 ? (
-          <p className="text-sm text-[#5C6975]">Add a cylinder type first.</p>
+          <p className="text-sm text-[var(--c-text-dim)]">Add a cylinder type first.</p>
         ) : (
           <div className="space-y-2">
             {types.map((ct) => <EmptyPriceRow key={ct.id} ct={ct} onSaved={reload} />)}
@@ -148,7 +148,7 @@ export default function PricingTab() {
                 return (
                   <Row key={d.id} onDelete={() => delDiscount(d.id)}>
                     <div className="font-medium">
-                      {nameOfCustomer(d.customerId)} <span className="text-[#5C6975]">→</span> {cylLabel(typeById[d.cylinderTypeId])}
+                      {nameOfCustomer(d.customerId)} <span className="text-[var(--c-text-dim)]">→</span> {cylLabel(typeById[d.cylinderTypeId])}
                     </div>
                     <div className="text-[12px] text-[#FF9A6E] font-mono">−₹{d.amount} · {formatDateIST(d.startDate)} → {formatDateIST(d.endDate)}</div>
                     {isActive && <Badge tone="good">Active today</Badge>}
@@ -175,7 +175,7 @@ function EmptyPriceRow({ ct, onSaved }) {
     <Row>
       <div className="font-medium">{cylLabel(ct)}</div>
       <div className="flex items-center gap-2 mt-1">
-        <span className="text-[#5C6975] text-[12px] font-mono">₹</span>
+        <span className="text-[var(--c-text-dim)] text-[12px] font-mono">₹</span>
         <input type="number" min="0" className={`${inputCls} w-24`} value={val} onChange={(e) => setVal(e.target.value)} placeholder="e.g. 800" />
         <Btn tone="ghost" onClick={save}>Save</Btn>
         {ct.emptyPrice != null && <Badge tone="teal">Current: ₹{ct.emptyPrice}</Badge>}

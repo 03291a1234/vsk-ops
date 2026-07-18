@@ -1,9 +1,49 @@
 @import "tailwindcss";
 
+/* ---------- theme palette ----------
+ * Neutrals (surfaces, borders, text) are variables so the whole chrome flips between
+ * dark (default) and light via the data-theme attribute on <html>. Brand accents
+ * (flame / teal / amber / red / green) and the deliberately-white invoice + date-picker
+ * stay hardcoded in components — they read the same in both themes. */
+:root,
+:root[data-theme="dark"] {
+  --c-page: #0f1316; /* page + input background (darkest surface) */
+  --c-panel: #171d22; /* card / panel surface */
+  --c-border: #262e35;
+  --c-divider: #20262c; /* softer table/row dividers */
+  --c-border-hover: #3a4550;
+  --c-text: #e7ecef; /* primary text */
+  --c-text-bright: #dde3e7;
+  --c-text-muted: #8fa0ac;
+  --c-text-dim: #5c6975;
+  --c-text-faint: #4b5661;
+  --c-fill: rgba(255, 255, 255, 0.05); /* subtle button/badge fill + hover */
+  --c-fill-strong: rgba(255, 255, 255, 0.1);
+  --c-hairline: rgba(255, 255, 255, 0.1); /* hairline borders on filled controls */
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --c-page: #eef1f4;
+  --c-panel: #ffffff;
+  --c-border: #d7dde3;
+  --c-divider: #e4e9ee;
+  --c-border-hover: #c1c9d1;
+  --c-text: #1a2229;
+  --c-text-bright: #0f1316;
+  --c-text-muted: #5b6773;
+  --c-text-dim: #7c8894;
+  --c-text-faint: #98a3ad;
+  --c-fill: rgba(15, 19, 22, 0.045);
+  --c-fill-strong: rgba(15, 19, 22, 0.09);
+  --c-hairline: rgba(15, 19, 22, 0.12);
+  color-scheme: light;
+}
+
 body {
   font-family: "Inter", sans-serif;
-  background-color: #0f1316;
-  color: #e7ecef;
+  background-color: var(--c-page);
+  color: var(--c-text);
 }
 
 @media print {

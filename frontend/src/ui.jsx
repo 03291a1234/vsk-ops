@@ -48,7 +48,7 @@ export const itemsSummary = (order, typeById) =>
 /* ---------- UI atoms ---------- */
 export const Badge = ({ children, tone = "muted" }) => {
   const tones = {
-    muted: "bg-white/5 text-[#8FA0AC] border-white/10",
+    muted: "bg-[var(--c-fill)] text-[var(--c-text-muted)] border-[var(--c-hairline)]",
     flame: "bg-[#FF7A45]/15 text-[#FF9A6E] border-[#FF7A45]/30",
     teal: "bg-[#22D3B0]/15 text-[#22D3B0] border-[#22D3B0]/30",
     good: "bg-[#3DD16F]/15 text-[#3DD16F] border-[#3DD16F]/30",
@@ -59,13 +59,13 @@ export const Badge = ({ children, tone = "muted" }) => {
 };
 
 export const Panel = ({ title, eyebrow, right, children, className = "" }) => (
-  <div className={`bg-[#171D22] border border-[#262E35] rounded-xl ${className}`}>
+  <div className={`bg-[var(--c-panel)] border border-[var(--c-border)] rounded-xl ${className}`}>
     {(title || right) && (
-      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#262E35] flex-wrap gap-2">
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[var(--c-border)] flex-wrap gap-2">
         <div>
-          {eyebrow && <div className="text-[10px] tracking-[0.18em] uppercase text-[#5C6975] font-mono mb-0.5">{eyebrow}</div>}
+          {eyebrow && <div className="text-[10px] tracking-[0.18em] uppercase text-[var(--c-text-dim)] font-mono mb-0.5">{eyebrow}</div>}
           {title && (
-            <h3 className="text-[#E7ECEF] font-semibold text-[15px]" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>
+            <h3 className="text-[var(--c-text)] font-semibold text-[15px]" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>
               {title}
             </h3>
           )}
@@ -79,22 +79,22 @@ export const Panel = ({ title, eyebrow, right, children, className = "" }) => (
 
 export const Field = ({ label, children, hint }) => (
   <label className="flex flex-col gap-1.5 text-sm">
-    <span className="text-[#8FA0AC] text-[12px] uppercase tracking-wide font-mono">{label}</span>
+    <span className="text-[var(--c-text-muted)] text-[12px] uppercase tracking-wide font-mono">{label}</span>
     {children}
-    {hint && <span className="text-[11px] text-[#4B5661]">{hint}</span>}
+    {hint && <span className="text-[11px] text-[var(--c-text-faint)]">{hint}</span>}
   </label>
 );
 
 export const inputCls =
-  "bg-[#0F1316] border border-[#262E35] rounded-lg px-3 py-2 text-[#E7ECEF] text-sm focus:outline-none focus:ring-2 focus:ring-[#FF7A45]/50 focus:border-[#FF7A45]/50 placeholder:text-[#4B5661]";
+  "bg-[var(--c-page)] border border-[var(--c-border)] rounded-lg px-3 py-2 text-[var(--c-text)] text-sm focus:outline-none focus:ring-2 focus:ring-[#FF7A45]/50 focus:border-[#FF7A45]/50 placeholder:text-[var(--c-text-faint)]";
 
 export const Btn = ({ children, onClick, tone = "default", disabled, type = "button", className = "" }) => {
   const tones = {
-    default: "bg-white/5 hover:bg-white/10 text-[#E7ECEF] border-white/10",
-    flame: "bg-[#FF7A45] hover:bg-[#FF8E60] text-[#0F1316] border-transparent font-semibold",
-    teal: "bg-[#22D3B0] hover:bg-[#3CE0BE] text-[#0F1316] border-transparent font-semibold",
+    default: "bg-[var(--c-fill)] hover:bg-[var(--c-fill-strong)] text-[var(--c-text)] border-[var(--c-hairline)]",
+    flame: "bg-[#FF7A45] hover:bg-[#FF8E60] text-[var(--c-page)] border-transparent font-semibold",
+    teal: "bg-[#22D3B0] hover:bg-[#3CE0BE] text-[var(--c-page)] border-transparent font-semibold",
     danger: "bg-[#FF5D5D]/15 hover:bg-[#FF5D5D]/25 text-[#FF8A8A] border-[#FF5D5D]/30",
-    ghost: "bg-transparent hover:bg-white/5 text-[#8FA0AC] border-transparent",
+    ghost: "bg-transparent hover:bg-[var(--c-fill)] text-[var(--c-text-muted)] border-transparent",
   };
   return (
     <button
@@ -109,10 +109,10 @@ export const Btn = ({ children, onClick, tone = "default", disabled, type = "but
 };
 
 export const Row = ({ children, onDelete }) => (
-  <div className="flex items-center justify-between bg-[#0F1316] border border-[#262E35] rounded-lg px-4 py-2.5 gap-3">
+  <div className="flex items-center justify-between bg-[var(--c-page)] border border-[var(--c-border)] rounded-lg px-4 py-2.5 gap-3">
     <div className="min-w-0">{children}</div>
     {onDelete && (
-      <button onClick={onDelete} className="text-[#5C6975] hover:text-[#FF5D5D] p-1 shrink-0">
+      <button onClick={onDelete} className="text-[var(--c-text-dim)] hover:text-[#FF5D5D] p-1 shrink-0">
         <Trash2 size={15} />
       </button>
     )}
@@ -122,9 +122,9 @@ export const Row = ({ children, onDelete }) => (
 export const Stat = ({ label, value, tone }) => {
   const tones = { flame: "text-[#FF9A6E]", warn: "text-[#FFC857]", bad: "text-[#FF5D5D]", teal: "text-[#22D3B0]" };
   return (
-    <div className="bg-[#171D22] border border-[#262E35] rounded-xl p-4">
-      <div className="text-[11px] uppercase tracking-wide text-[#5C6975] font-mono">{label}</div>
-      <div className={`text-2xl font-semibold mt-1 ${tones[tone] || "text-[#E7ECEF]"}`} style={{ fontFamily: "'Space Grotesk',sans-serif" }}>
+    <div className="bg-[var(--c-panel)] border border-[var(--c-border)] rounded-xl p-4">
+      <div className="text-[11px] uppercase tracking-wide text-[var(--c-text-dim)] font-mono">{label}</div>
+      <div className={`text-2xl font-semibold mt-1 ${tones[tone] || "text-[var(--c-text)]"}`} style={{ fontFamily: "'Space Grotesk',sans-serif" }}>
         {value}
       </div>
     </div>
@@ -141,8 +141,8 @@ export const LoadError = ({ error, onRetry }) => (
 
 export const Empty = ({ text, action, actionLabel }) => (
   <div className="text-center py-8">
-    <AlertTriangle size={22} className="mx-auto text-[#4B5661] mb-2" />
-    <p className="text-sm text-[#5C6975] mb-3">{text}</p>
+    <AlertTriangle size={22} className="mx-auto text-[var(--c-text-faint)] mb-2" />
+    <p className="text-sm text-[var(--c-text-dim)] mb-3">{text}</p>
     {action && (
       <Btn tone="flame" onClick={action}>
         {actionLabel}
@@ -154,7 +154,7 @@ export const Empty = ({ text, action, actionLabel }) => (
 /** generic segmented pipeline, used for both order-level and trip-level progress */
 export const Pipeline = ({ stages, stageIndex, rejected }) => (
   <div className="w-full">
-    <div className="relative h-2 rounded-full bg-[#0F1316] border border-[#262E35] overflow-hidden">
+    <div className="relative h-2 rounded-full bg-[var(--c-page)] border border-[var(--c-border)] overflow-hidden">
       {!rejected ? (
         <div
           className="h-full transition-all duration-500"
@@ -169,10 +169,10 @@ export const Pipeline = ({ stages, stageIndex, rejected }) => (
         <div key={s} className="flex flex-col items-center flex-1">
           <div
             className={`w-2.5 h-2.5 rounded-full border ${
-              rejected ? "bg-[#FF5D5D] border-[#FF5D5D]" : i <= stageIndex ? "bg-[#FF7A45] border-[#FF7A45]" : "bg-[#0F1316] border-[#262E35]"
+              rejected ? "bg-[#FF5D5D] border-[#FF5D5D]" : i <= stageIndex ? "bg-[#FF7A45] border-[#FF7A45]" : "bg-[var(--c-page)] border-[var(--c-border)]"
             }`}
           />
-          <span className={`text-[9px] mt-1 text-center font-mono ${i <= stageIndex && !rejected ? "text-[#FF9A6E]" : "text-[#4B5661]"}`}>{s}</span>
+          <span className={`text-[9px] mt-1 text-center font-mono ${i <= stageIndex && !rejected ? "text-[#FF9A6E]" : "text-[var(--c-text-faint)]"}`}>{s}</span>
         </div>
       ))}
     </div>
@@ -229,7 +229,7 @@ export const DateInput = ({ value, onChange, min, className = "" }) => {
     <div className={`relative ${className}`}>
       <button type="button" onClick={() => setOpen((o) => !o)} className={`${inputCls} w-full flex items-center justify-between gap-2 text-left`}>
         <span>{formatDateIST(val)}</span>
-        <CalendarDays size={14} className="text-[#5C6975] shrink-0" />
+        <CalendarDays size={14} className="text-[var(--c-text-dim)] shrink-0" />
       </button>
       {open && (
         <>

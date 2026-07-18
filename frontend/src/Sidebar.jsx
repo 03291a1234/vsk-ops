@@ -72,7 +72,7 @@ export default function Sidebar({ tab, setTab, open, setOpen, openGroups, setOpe
       onClick={() => setTab(item.id)}
       title={item.label}
       className={`w-full flex items-center gap-2.5 rounded-lg text-sm transition py-2 ${indent ? "pl-8 pr-3" : "px-3"} ${
-        tab === item.id ? "bg-[#FF7A45]/15 text-[#FF9A6E]" : "text-[#8FA0AC] hover:bg-white/5 hover:text-[#DDE3E7]"
+        tab === item.id ? "bg-[#FF7A45]/15 text-[#FF9A6E]" : "text-[var(--c-text-muted)] hover:bg-[var(--c-fill)] hover:text-[var(--c-text-bright)]"
       }`}
     >
       <item.icon size={16} className="shrink-0" />
@@ -81,27 +81,27 @@ export default function Sidebar({ tab, setTab, open, setOpen, openGroups, setOpe
   );
 
   return (
-    <div className={`${open ? "w-60" : "w-[68px]"} shrink-0 border-r border-[#262E35] bg-[#0F1316] flex flex-col transition-all duration-200 sticky top-0 h-screen overflow-hidden`}>
-      <div className="flex items-center gap-2.5 px-4 h-[72px] border-b border-[#262E35] shrink-0">
+    <div className={`${open ? "w-60" : "w-[68px]"} shrink-0 border-r border-[var(--c-border)] bg-[var(--c-page)] flex flex-col transition-all duration-200 sticky top-0 h-screen overflow-hidden`}>
+      <div className="flex items-center gap-2.5 px-4 h-[72px] border-b border-[var(--c-border)] shrink-0">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           title={open ? "Collapse menu" : "Expand menu"}
           className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF7A45] to-[#FFC857] flex items-center justify-center shrink-0 hover:opacity-90 transition"
         >
-          <Flame size={18} className="text-[#0F1316]" />
+          <Flame size={18} className="text-[var(--c-page)]" />
         </button>
         {open && (
           <>
             <div className="min-w-0 flex-1">
               <div className="font-semibold tracking-tight truncate" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>VSK Gas Ops</div>
-              <div className="text-[9px] text-[#5C6975] font-mono uppercase tracking-wide truncate">Cylinder Distribution</div>
+              <div className="text-[9px] text-[var(--c-text-dim)] font-mono uppercase tracking-wide truncate">Cylinder Distribution</div>
             </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
               title="Collapse menu"
-              className="shrink-0 p-1.5 rounded-lg text-[#8FA0AC] hover:bg-white/5 hover:text-[#DDE3E7] transition"
+              className="shrink-0 p-1.5 rounded-lg text-[var(--c-text-muted)] hover:bg-[var(--c-fill)] hover:text-[var(--c-text-bright)] transition"
             >
               <ChevronLeft size={16} />
             </button>
@@ -120,7 +120,7 @@ export default function Sidebar({ tab, setTab, open, setOpen, openGroups, setOpe
                 type="button"
                 onClick={() => { if (!open) setOpen(true); toggleGroup(g.id); }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
-                  isActiveGroup ? "text-[#FF9A6E]" : "text-[#8FA0AC] hover:bg-white/5 hover:text-[#DDE3E7]"
+                  isActiveGroup ? "text-[#FF9A6E]" : "text-[var(--c-text-muted)] hover:bg-[var(--c-fill)] hover:text-[var(--c-text-bright)]"
                 }`}
               >
                 <g.icon size={16} className="shrink-0" />
@@ -139,28 +139,28 @@ export default function Sidebar({ tab, setTab, open, setOpen, openGroups, setOpe
         {trailingItems.map((item) => <NavBtn key={item.id} item={item} />)}
       </div>
 
-      <div className="px-3 py-3 border-t border-[#262E35] shrink-0">
+      <div className="px-3 py-3 border-t border-[var(--c-border)] shrink-0">
         <div
           className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
-            tab === "account" ? "bg-[#FF7A45]/15 text-[#FF9A6E]" : "text-[#8FA0AC]"
+            tab === "account" ? "bg-[#FF7A45]/15 text-[#FF9A6E]" : "text-[var(--c-text-muted)]"
           }`}
         >
           <button
             type="button"
             onClick={() => setTab("account")}
             title="My Account"
-            className="flex items-center gap-2.5 flex-1 min-w-0 text-left hover:text-[#DDE3E7]"
+            className="flex items-center gap-2.5 flex-1 min-w-0 text-left hover:text-[var(--c-text-bright)]"
           >
             <User size={16} className="shrink-0" />
             {open && (
               <span className="truncate flex-1">
                 <span className="block leading-tight">{profile.name}</span>
-                <span className="block text-[10px] text-[#5C6975] font-mono leading-tight">{profile.role} · My Account</span>
+                <span className="block text-[10px] text-[var(--c-text-dim)] font-mono leading-tight">{profile.role} · My Account</span>
               </span>
             )}
           </button>
           {open && (
-            <button type="button" onClick={logout} title="Sign out" className="p-1.5 rounded-lg hover:bg-white/5 hover:text-[#DDE3E7]">
+            <button type="button" onClick={logout} title="Sign out" className="p-1.5 rounded-lg hover:bg-[var(--c-fill)] hover:text-[var(--c-text-bright)]">
               <LogOut size={14} />
             </button>
           )}

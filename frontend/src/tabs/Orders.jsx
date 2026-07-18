@@ -34,7 +34,7 @@ export default function OrdersTab({ setTab, focusOrderId, setFocusOrderId }) {
     if (focusOrderId && focusRef.current) focusRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading orders…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading orders…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const { orders, customers, types } = data;
   const customerById = byId(customers);
@@ -110,16 +110,16 @@ export default function OrdersTab({ setTab, focusOrderId, setFocusOrderId }) {
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="font-mono text-sm text-[#8FA0AC]">#{o.id}</span>
+                    <span className="font-mono text-sm text-[var(--c-text-muted)]">#{o.id}</span>
                     {o.rejected ? <Badge tone="bad">Rejected</Badge> : <Badge tone={o.stage === 3 ? "good" : "flame"}>{ORDER_STAGES[o.stage]}</Badge>}
                     {!o.rejected && <Badge tone={statusTone}>{status}</Badge>}
                     {o.tripId && <Badge tone="teal">Trip #{o.tripId}</Badge>}
                   </div>
                   <div className="font-medium">{nameOfCustomer(o.customerId)}</div>
-                  <div className="text-[12px] text-[#8FA0AC] font-mono">Order date: {formatDateIST(o.orderDate)} · ₹{o.amount} total</div>
+                  <div className="text-[12px] text-[var(--c-text-muted)] font-mono">Order date: {formatDateIST(o.orderDate)} · ₹{o.amount} total</div>
                   <div className="mt-1 space-y-0.5">
                     {o.items.map((it) => (
-                      <div key={it.id} className="text-[12px] text-[#8FA0AC] font-mono">
+                      <div key={it.id} className="text-[12px] text-[var(--c-text-muted)] font-mono">
                         {it.qty} × {cylLabel(typeById[it.cylinderTypeId])} @ ₹{it.rate} = ₹{it.amount}
                         {it.orderedQty !== it.qty && <span className="text-[#FFC857]"> (ordered {it.orderedQty})</span>}
                       </div>
@@ -182,9 +182,9 @@ function PaymentPanel({ order: o, onPaid }) {
   };
 
   return (
-    <div className="mt-4 pt-4 border-t border-[#262E35]">
+    <div className="mt-4 pt-4 border-t border-[var(--c-border)]">
       <div className="flex flex-wrap gap-4 text-sm font-mono mb-3">
-        <span className="text-[#5C6975]">Total ₹{o.amount}</span>
+        <span className="text-[var(--c-text-dim)]">Total ₹{o.amount}</span>
         <span className="text-[#22D3B0]">Paid ₹{paid}</span>
         <span className={due > 0 ? "text-[#FF5D5D]" : "text-[#3DD16F]"}>Due ₹{due}</span>
       </div>
@@ -201,7 +201,7 @@ function PaymentPanel({ order: o, onPaid }) {
         </div>
       )}
       {(o.payments || []).length > 0 && (
-        <div className="mt-3 space-y-1 text-[11px] font-mono text-[#5C6975]">
+        <div className="mt-3 space-y-1 text-[11px] font-mono text-[var(--c-text-dim)]">
           {o.payments.map((p) => (
             <div key={p.id}>· ₹{p.amount} via {p.method}</div>
           ))}
@@ -246,7 +246,7 @@ function SettleDuesPanel({ orders, customers, nameOfCustomer, onSettled }) {
 
   return (
     <Panel eyebrow="Bulk Settlement" title="Settle Customer Dues"
-      right={<span className="text-[11px] text-[#5C6975] font-mono">One payment splits across all their outstanding orders, oldest first</span>}>
+      right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">One payment splits across all their outstanding orders, oldest first</span>}>
       <div className="grid sm:grid-cols-4 gap-3 items-end">
         <Field label="Customer">
           <select className={inputCls} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
@@ -268,7 +268,7 @@ function SettleDuesPanel({ orders, customers, nameOfCustomer, onSettled }) {
           <Wallet size={15} /> Settle
         </Btn>
       </div>
-      {selected && <div className="text-[11px] text-[#4B5661] font-mono mt-2">Total outstanding for {nameOfCustomer(selected.c.id)}: ₹{selected.due}</div>}
+      {selected && <div className="text-[11px] text-[var(--c-text-faint)] font-mono mt-2">Total outstanding for {nameOfCustomer(selected.c.id)}: ₹{selected.due}</div>}
     </Panel>
   );
 }

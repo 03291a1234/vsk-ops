@@ -48,7 +48,7 @@ export function DriversTab() {
             {drivers.map((d) => (
               <Row key={d.id} onDelete={() => del(d.id)}>
                 <div className="font-medium">{d.name}</div>
-                <div className="text-[12px] text-[#8FA0AC] font-mono">{d.phone || "—"} · {d.license || "—"}</div>
+                <div className="text-[12px] text-[var(--c-text-muted)] font-mono">{d.phone || "—"} · {d.license || "—"}</div>
               </Row>
             ))}
           </div>
@@ -101,7 +101,7 @@ export function TrucksTab() {
             {trucks.map((t) => (
               <Row key={t.id} onDelete={() => del(t.id)}>
                 <div className="font-medium font-mono">{t.regNo}</div>
-                <div className="text-[12px] text-[#8FA0AC]">Cap: {t.capacity || "—"} · Driver: {driverById[t.driverId]?.name || "—"}</div>
+                <div className="text-[12px] text-[var(--c-text-muted)]">Cap: {t.capacity || "—"} · Driver: {driverById[t.driverId]?.name || "—"}</div>
               </Row>
             ))}
           </div>
@@ -144,7 +144,7 @@ export function VendorsTab() {
             {vendors.map((v) => (
               <Row key={v.id} onDelete={() => del(v.id)}>
                 <div className="font-medium">{v.name}</div>
-                <div className="text-[12px] text-[#8FA0AC]">{v.phone || "—"} · {v.address || "—"}</div>
+                <div className="text-[12px] text-[var(--c-text-muted)]">{v.phone || "—"} · {v.address || "—"}</div>
               </Row>
             ))}
           </div>
@@ -196,9 +196,9 @@ export function CustomersTab({ setTab }) {
               <Field label="Latitude" hint="Optional"><input className={inputCls} value={f.lat} onChange={(e) => setF({ ...f, lat: e.target.value })} placeholder="17.38" /></Field>
               <Field label="Longitude" hint="Optional"><input className={inputCls} value={f.lng} onChange={(e) => setF({ ...f, lng: e.target.value })} placeholder="78.48" /></Field>
             </div>
-            <p className="text-[11px] text-[#4B5661]">Leave coordinates blank and route planning will approximate a location automatically.</p>
-            <div className="pt-2 border-t border-[#262E35] space-y-3">
-              <span className="text-[#8FA0AC] text-[12px] uppercase tracking-wide font-mono">Opening Balances (optional)</span>
+            <p className="text-[11px] text-[var(--c-text-faint)]">Leave coordinates blank and route planning will approximate a location automatically.</p>
+            <div className="pt-2 border-t border-[var(--c-border)] space-y-3">
+              <span className="text-[var(--c-text-muted)] text-[12px] uppercase tracking-wide font-mono">Opening Balances (optional)</span>
               <Field label="Outstanding Balance (₹)" hint="Amount already owed before using this system">
                 <input type="number" min="0" className={inputCls} value={f.openingBalance} onChange={(e) => setF({ ...f, openingBalance: e.target.value })} placeholder="0" />
               </Field>
@@ -221,7 +221,7 @@ export function CustomersTab({ setTab }) {
               {customers.map((c) => (
                 <Row key={c.id} onDelete={() => del(c.id)}>
                   <div className="font-medium">{c.name}</div>
-                  <div className="text-[12px] text-[#8FA0AC]">{c.phone || "—"} · {c.address || "—"}</div>
+                  <div className="text-[12px] text-[var(--c-text-muted)]">{c.phone || "—"} · {c.address || "—"}</div>
                   <div className="flex gap-2 mt-1 flex-wrap">
                     {c.openingBalance > 0 && <Badge tone="warn">Opening due: ₹{c.openingBalance}</Badge>}
                     {c.openingEmptiesQty > 0 && (
@@ -234,7 +234,7 @@ export function CustomersTab({ setTab }) {
           )
         }
       />
-      <div className="text-[11px] text-[#4B5661] font-mono">
+      <div className="text-[11px] text-[var(--c-text-faint)] font-mono">
         MRP and discounts are managed under <button className="text-[#FF9A6E] hover:underline" onClick={() => setTab("discounts")}>Pricing</button>.
       </div>
     </div>
@@ -283,7 +283,7 @@ export function CylindersTab() {
               {types.map((c) => (
                 <Row key={c.id} onDelete={() => del(c.id)}>
                   <div className="font-medium">{cylLabel(c)}</div>
-                  {c.emptyPrice != null && <div className="text-[12px] text-[#8FA0AC] font-mono">Empty purchase price: ₹{c.emptyPrice}</div>}
+                  {c.emptyPrice != null && <div className="text-[12px] text-[var(--c-text-muted)] font-mono">Empty purchase price: ₹{c.emptyPrice}</div>}
                 </Row>
               ))}
             </div>
@@ -292,7 +292,7 @@ export function CylindersTab() {
       />
 
       <Panel eyebrow="Company Inventory" title="Depot Stock (Full / Empty / Defective)"
-        right={<span className="text-[11px] text-[#5C6975] font-mono">Full auto-deducts on trip departure; Empty/Defective auto-credit on delivery. Edit directly only for manual corrections.</span>}>
+        right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">Full auto-deducts on trip departure; Empty/Defective auto-credit on delivery. Edit directly only for manual corrections.</span>}>
         {types.length === 0 ? (
           <Empty text="No cylinder types yet — add one above first." />
         ) : (
@@ -331,13 +331,13 @@ function InventoryStockRow({ ct, record, onChanged }) {
 
   const NumInput = ({ label, value, set }) => (
     <div className="flex flex-col items-start">
-      <span className="text-[9px] text-[#4B5661] font-mono">{label}</span>
+      <span className="text-[9px] text-[var(--c-text-faint)] font-mono">{label}</span>
       <input type="number" min="0" value={value} onChange={(e) => set(e.target.value)} className={`${inputCls} w-20`} />
     </div>
   );
 
   return (
-    <div className="flex items-center justify-between flex-wrap gap-3 bg-[#0F1316] border border-[#262E35] rounded-lg px-4 py-3">
+    <div className="flex items-center justify-between flex-wrap gap-3 bg-[var(--c-page)] border border-[var(--c-border)] rounded-lg px-4 py-3">
       <div className="font-medium">{cylLabel(ct)}</div>
       <div className="flex items-center gap-2 flex-wrap">
         <NumInput label="Full" value={full} set={setFull} />
@@ -395,7 +395,7 @@ function IoclPanel({ types, vendors, iocl, onChanged }) {
 
   return (
     <Panel eyebrow="Supplier" title="IOCL Supply"
-      right={<span className="text-[11px] text-[#5C6975] font-mono">Ship empties/defectives out for refill, receive full stock back, track what's billed</span>}>
+      right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">Ship empties/defectives out for refill, receive full stock back, track what's billed</span>}>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
         <Stat label="Sent to IOCL (all-time)" value={sentTx.reduce((a, t) => a + t.qty, 0)} tone="teal" />
         <Stat label="Received from IOCL (all-time)" value={receivedTx.reduce((a, t) => a + t.qty, 0)} tone="flame" />
@@ -404,8 +404,8 @@ function IoclPanel({ types, vendors, iocl, onChanged }) {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 mb-5">
-        <div className="rounded-lg border border-[#262E35] bg-[#0F1316] p-4 space-y-3">
-          <div className="text-sm font-medium text-[#DDE3E7]">Send Empties/Defectives to IOCL</div>
+        <div className="rounded-lg border border-[var(--c-border)] bg-[var(--c-page)] p-4 space-y-3">
+          <div className="text-sm font-medium text-[var(--c-text-bright)]">Send Empties/Defectives to IOCL</div>
           <Field label="Cylinder Type">
             <select className={inputCls} value={sendForm.cylinderTypeId} onChange={(e) => setSendForm({ ...sendForm, cylinderTypeId: e.target.value })}>
               <option value="">Select type…</option>
@@ -423,8 +423,8 @@ function IoclPanel({ types, vendors, iocl, onChanged }) {
           </Btn>
         </div>
 
-        <div className="rounded-lg border border-[#262E35] bg-[#0F1316] p-4 space-y-3">
-          <div className="text-sm font-medium text-[#DDE3E7]">Receive New Stock from IOCL</div>
+        <div className="rounded-lg border border-[var(--c-border)] bg-[var(--c-page)] p-4 space-y-3">
+          <div className="text-sm font-medium text-[var(--c-text-bright)]">Receive New Stock from IOCL</div>
           <Field label="Cylinder Type">
             <select className={inputCls} value={receiveForm.cylinderTypeId} onChange={(e) => setReceiveForm({ ...receiveForm, cylinderTypeId: e.target.value })}>
               <option value="">Select type…</option>
@@ -449,14 +449,14 @@ function IoclPanel({ types, vendors, iocl, onChanged }) {
         </div>
       </div>
 
-      <div className="text-[11px] uppercase tracking-wide text-[#5C6975] font-mono mb-2">Transaction History</div>
+      <div className="text-[11px] uppercase tracking-wide text-[var(--c-text-dim)] font-mono mb-2">Transaction History</div>
       {iocl.length === 0 ? (
         <Empty text="No IOCL transactions logged yet." />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-[#5C6975] font-mono border-b border-[#262E35]">
+              <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--c-text-dim)] font-mono border-b border-[var(--c-border)]">
                 <th className="py-2 pr-4">Date / Billed On</th>
                 <th className="py-2 pr-4">Type</th>
                 <th className="py-2 pr-4">Cylinder Type</th>
@@ -470,13 +470,13 @@ function IoclPanel({ types, vendors, iocl, onChanged }) {
             </thead>
             <tbody>
               {iocl.map((t) => (
-                <tr key={t.id} className="border-b border-[#262E35]/60">
+                <tr key={t.id} className="border-b border-[var(--c-divider)]">
                   <td className="py-2 pr-4 font-mono">{formatDateIST(t.date)}</td>
                   <td className="py-2 pr-4">{t.type === "sent" ? <Badge tone="teal">Sent</Badge> : <Badge tone="flame">Received</Badge>}</td>
                   <td className="py-2 pr-4">{cylLabel(typeById[t.cylinderTypeId])}</td>
                   <td className="py-2 pr-4 font-mono">{t.qty}</td>
                   <td className="py-2 pr-4">{t.type === "received" ? vendorById[t.vendorId]?.name ?? "—" : "—"}</td>
-                  <td className="py-2 pr-4 text-[12px] text-[#8FA0AC]">
+                  <td className="py-2 pr-4 text-[12px] text-[var(--c-text-muted)]">
                     {t.type === "sent" ? `${t.emptyQty} empty, ${t.defectiveQty} defective` : (t.note || "—")}
                   </td>
                   <td className="py-2 pr-4 font-mono">{t.type === "received" ? `₹${t.amountBilled}` : "—"}</td>
@@ -488,7 +488,7 @@ function IoclPanel({ types, vendors, iocl, onChanged }) {
                     ) : "—"}
                   </td>
                   <td className="py-2 pr-4">
-                    <button onClick={() => del(t.id)} className="text-[#5C6975] hover:text-[#FF5D5D] p-1" title="Delete (reverses the stock effect)">
+                    <button onClick={() => del(t.id)} className="text-[var(--c-text-dim)] hover:text-[#FF5D5D] p-1" title="Delete (reverses the stock effect)">
                       <Trash2 size={14} />
                     </button>
                   </td>

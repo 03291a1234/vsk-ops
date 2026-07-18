@@ -26,7 +26,7 @@ export default function TeamTab() {
   const [f, setF] = useState(empty);
   const [busy, setBusy] = useState(false);
 
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading team…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading team…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const { users, drivers } = data;
   const driverById = byId(drivers);
@@ -68,7 +68,7 @@ export default function TeamTab() {
             <select className={inputCls} value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>
               {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
-            <p className="text-[11px] text-[#4B5661] mt-1">{ROLE_BLURB[f.role]}</p>
+            <p className="text-[11px] text-[var(--c-text-faint)] mt-1">{ROLE_BLURB[f.role]}</p>
           </Field>
           {f.role === "Driver" && (
             <Field label="Which driver record?" hint="Dispatch will show only trips assigned to them">
@@ -154,7 +154,7 @@ function UserRow({ user: u, drivers, driverById, onChanged }) {
   return (
     <Row>
       <div className="font-medium">{u.name}</div>
-      <div className="text-[12px] text-[#8FA0AC] font-mono">{u.email}</div>
+      <div className="text-[12px] text-[var(--c-text-muted)] font-mono">{u.email}</div>
       <div className="flex gap-2 mt-1 items-center flex-wrap">
         <Badge tone={ROLE_TONE[u.role]}>{u.role}</Badge>
         {driverName && <Badge tone="muted">Driver: {driverName}</Badge>}
@@ -183,7 +183,7 @@ function UserRow({ user: u, drivers, driverById, onChanged }) {
       )}
 
       {mode === "edit" && (
-        <div className="mt-3 space-y-2 border-t border-[#262E35] pt-3">
+        <div className="mt-3 space-y-2 border-t border-[var(--c-border)] pt-3">
           <div className="grid sm:grid-cols-2 gap-2">
             <Field label="Name">
               <input className={inputCls} value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />

@@ -30,7 +30,7 @@ export default function DispatchTab({ setTab, goToOrderPayment }) {
   const [truckId, setTruckId] = useState("");
   const [selected, setSelected] = useState([]);
 
-  if (loading) return <div className="text-sm text-[#5C6975] font-mono">Loading dispatch…</div>;
+  if (loading) return <div className="text-sm text-[var(--c-text-dim)] font-mono">Loading dispatch…</div>;
   if (error) return <LoadError error={error} onRetry={reload} />;
   const { trips, drivers, trucks, types, customers, orders } = data;
   const typeById = byId(types);
@@ -70,23 +70,23 @@ export default function DispatchTab({ setTab, goToOrderPayment }) {
     <div className="space-y-6">
       <FlowNav current="dispatch" setTab={setTab} />
       {isDriver && (
-        <div className="bg-[#171D22] border border-[#262E35] rounded-xl px-5 py-3 text-sm text-[#8FA0AC]">
+        <div className="bg-[var(--c-panel)] border border-[var(--c-border)] rounded-xl px-5 py-3 text-sm text-[var(--c-text-muted)]">
           Showing your assigned trips only.
         </div>
       )}
       {!isDriver && (
         <Panel eyebrow="Multi-Order Dispatch" title={`Approved Orders Ready for Trip (${pool.length})`}
-          right={<span className="text-[11px] text-[#5C6975] font-mono">One truck/driver can carry several orders in a single trip</span>}>
+          right={<span className="text-[11px] text-[var(--c-text-dim)] font-mono">One truck/driver can carry several orders in a single trip</span>}>
           {pool.length === 0 ? (
             <Empty text="No approved orders waiting for dispatch." action={() => setTab("orders")} actionLabel="Go approve some orders" />
           ) : (
             <div className="space-y-2 mb-4">
               {pool.map((o) => (
-                <label key={o.id} className="flex items-center gap-3 bg-[#0F1316] border border-[#262E35] rounded-lg px-4 py-2.5 cursor-pointer">
+                <label key={o.id} className="flex items-center gap-3 bg-[var(--c-page)] border border-[var(--c-border)] rounded-lg px-4 py-2.5 cursor-pointer">
                   <input type="checkbox" checked={selected.includes(o.id)} onChange={() => toggleSel(o.id)} className="accent-[#FF7A45]" />
                   <div className="flex-1">
                     <div className="text-sm font-medium">{nameOfCustomer(o.customerId)}</div>
-                    <div className="text-[12px] text-[#8FA0AC] font-mono">#{o.id} · {itemsSummary(o, typeById)}</div>
+                    <div className="text-[12px] text-[var(--c-text-muted)] font-mono">#{o.id} · {itemsSummary(o, typeById)}</div>
                   </div>
                 </label>
               ))}
@@ -152,7 +152,7 @@ function TripCard({ trip: t, typeById, nameOfCustomer, driverName, truckLabel, o
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-sm text-[#8FA0AC]">Trip #{t.id}</span>
+            <span className="font-mono text-sm text-[var(--c-text-muted)]">Trip #{t.id}</span>
             <Badge tone={t.stage === 2 ? "good" : "flame"}>{TRIP_STAGES[t.stage]}</Badge>
             <Badge tone="muted">{(tripOrders || []).length} order(s)</Badge>
           </div>
@@ -168,7 +168,7 @@ function TripCard({ trip: t, typeById, nameOfCustomer, driverName, truckLabel, o
       {t.stage === 0 && (tripOrders || []).length > 0 && (
         <div className="mt-4 space-y-1">
           {tripOrders.map((o) => (
-            <div key={o.id} className="text-[12px] text-[#8FA0AC] font-mono">
+            <div key={o.id} className="text-[12px] text-[var(--c-text-muted)] font-mono">
               #{o.id} · {nameOfCustomer(o.customerId)} · {itemsSummary(o, typeById)}
             </div>
           ))}
@@ -177,7 +177,7 @@ function TripCard({ trip: t, typeById, nameOfCustomer, driverName, truckLabel, o
 
       {t.stage >= 1 && (
         <div className="mt-4 space-y-2">
-          <div className="text-[11px] uppercase tracking-wide text-[#5C6975] font-mono mb-1">Optimized Route (nearest-neighbour)</div>
+          <div className="text-[11px] uppercase tracking-wide text-[var(--c-text-dim)] font-mono mb-1">Optimized Route (nearest-neighbour)</div>
           {t.stops.map((stop, i) => (
             <RouteStop
               key={stop.id}
@@ -226,13 +226,13 @@ function RouteStop({ trip, stop, seq, order, typeById, nameOfCustomer, onChanged
   };
 
   return (
-    <div className="bg-[#0F1316] border border-[#262E35] rounded-lg px-4 py-3">
+    <div className="bg-[var(--c-page)] border border-[var(--c-border)] rounded-lg px-4 py-3">
       <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 rounded-full bg-[#FF7A45]/15 text-[#FF9A6E] text-[12px] font-mono flex items-center justify-center border border-[#FF7A45]/30">{seq}</div>
           <div>
             <div className="text-sm font-medium">{nameOfCustomer(stop.customerId ?? order.customerId)}</div>
-            <div className="text-[11px] text-[#5C6975] font-mono">
+            <div className="text-[11px] text-[var(--c-text-dim)] font-mono">
               {order.items.length} item(s), {totalQty} cyl ordered · {stop.distanceKm}km leg · ETA {stop.etaMin} min
             </div>
           </div>
@@ -245,7 +245,7 @@ function RouteStop({ trip, stop, seq, order, typeById, nameOfCustomer, onChanged
           ? stop.items.map((it) => {
               const changed = it.actualQty !== it.orderedQty;
               return (
-                <div key={it.cylinderTypeId} className="flex items-center justify-between gap-2 flex-wrap bg-[#171D22] rounded-md px-3 py-2">
+                <div key={it.cylinderTypeId} className="flex items-center justify-between gap-2 flex-wrap bg-[var(--c-panel)] rounded-md px-3 py-2">
                   <span className="text-sm">
                     {cylLabel(typeById[it.cylinderTypeId])} · ordered {it.orderedQty}
                     {changed && <span className="text-[#FFC857]"> → delivered {it.actualQty}</span>}
@@ -267,21 +267,21 @@ function RouteStop({ trip, stop, seq, order, typeById, nameOfCustomer, onChanged
               const price = priceFor(it.cylinderTypeId);
               const diff = actualQty - it.qty;
               return (
-                <div key={it.cylinderTypeId} className="bg-[#171D22] rounded-md px-3 py-2">
+                <div key={it.cylinderTypeId} className="bg-[var(--c-panel)] rounded-md px-3 py-2">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="text-sm">{cylLabel(typeById[it.cylinderTypeId])} · ordered {it.qty}</span>
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="flex flex-col items-start">
-                        <span className="text-[9px] text-[#4B5661] font-mono">Qty to deliver</span>
+                        <span className="text-[9px] text-[var(--c-text-faint)] font-mono">Qty to deliver</span>
                         <input type="number" min="0" value={row.actualQty} onChange={(e) => updateRow(idx, "actualQty", e.target.value)} className={`${inputCls} w-16`} />
                       </div>
                       <Badge tone="flame">Full: {liveFull}</Badge>
                       <div className="flex flex-col items-start">
-                        <span className="text-[9px] text-[#4B5661] font-mono">Empty</span>
+                        <span className="text-[9px] text-[var(--c-text-faint)] font-mono">Empty</span>
                         <input type="number" min="0" value={row.empty} onChange={(e) => updateRow(idx, "empty", e.target.value)} className={`${inputCls} w-16`} />
                       </div>
                       <div className="flex flex-col items-start">
-                        <span className="text-[9px] text-[#4B5661] font-mono">Defect</span>
+                        <span className="text-[9px] text-[var(--c-text-faint)] font-mono">Defect</span>
                         <input type="number" min="0" max={actualQty} value={row.defect} onChange={(e) => updateRow(idx, "defect", e.target.value)} className={`${inputCls} w-16`} />
                       </div>
                     </div>
@@ -295,12 +295,12 @@ function RouteStop({ trip, stop, seq, order, typeById, nameOfCustomer, onChanged
                     <div className="text-[10px] text-[#FF9A6E] font-mono mt-1">{actualQty} − {row.defect} defective = {liveFull} full.</div>
                   )}
                   {shortfall > 0 && (
-                    <div className="mt-2 pt-2 border-t border-[#262E35] flex items-center justify-between flex-wrap gap-2">
+                    <div className="mt-2 pt-2 border-t border-[var(--c-border)] flex items-center justify-between flex-wrap gap-2">
                       <div className="text-[11px] text-[#FFC857] font-mono">
                         Shortfall of {shortfall} not being returned — customer can buy it now{price ? ` at ₹${price}/cyl` : " (set an empty price in Pricing first)"}.
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-[#4B5661] font-mono">Buy</span>
+                        <span className="text-[9px] text-[var(--c-text-faint)] font-mono">Buy</span>
                         <input
                           type="number" min="0" max={shortfall} disabled={!price} value={row.buy}
                           onChange={(e) => updateRow(idx, "buy", Math.min(Number(e.target.value) || 0, shortfall))}
@@ -321,8 +321,8 @@ function RouteStop({ trip, stop, seq, order, typeById, nameOfCustomer, onChanged
         </div>
       )}
       {stop.delivered && (
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#262E35] pt-3">
-          <span className="text-[12px] font-mono text-[#5C6975]">
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--c-border)] pt-3">
+          <span className="text-[12px] font-mono text-[var(--c-text-dim)]">
             ₹{order.amount} total · <span className={dueOf(order) > 0 ? "text-[#FF5D5D]" : "text-[#3DD16F]"}>{paymentStatusOf(order)}</span>
           </span>
           <Btn tone="ghost" onClick={() => goToOrderPayment(order.id)}>

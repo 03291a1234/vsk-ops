@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 import { Flame } from "lucide-react";
 import { api, auth } from "./api";
 import { Btn, Field, inputCls, Panel } from "./ui";
+import { ThemeToggle } from "./theme";
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -62,17 +63,20 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F1316] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--c-page)] flex items-center justify-center p-6">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm space-y-4">
         <div className="flex items-center gap-2.5 justify-center mb-2">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF7A45] to-[#FFC857] flex items-center justify-center">
-            <Flame size={20} className="text-[#0F1316]" />
+            <Flame size={20} className="text-[var(--c-page)]" />
           </div>
           <div>
-            <div className="font-semibold tracking-tight text-[#E7ECEF]" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>
+            <div className="font-semibold tracking-tight text-[var(--c-text)]" style={{ fontFamily: "'Space Grotesk',sans-serif" }}>
               VSK Gas Ops
             </div>
-            <div className="text-[9px] text-[#5C6975] font-mono uppercase tracking-wide">Cylinder Distribution</div>
+            <div className="text-[9px] text-[var(--c-text-dim)] font-mono uppercase tracking-wide">Cylinder Distribution</div>
           </div>
         </div>
         <Panel eyebrow={registerMode ? "First-time setup" : "Sign in"} title={registerMode ? "Create the first (Owner) account" : "Welcome back"}>
@@ -100,11 +104,11 @@ export function LoginPage() {
               {registerMode ? "Create account & sign in" : "Sign in"}
             </Btn>
           </form>
-          <button type="button" onClick={() => setRegisterMode((m) => !m)} className="mt-3 w-full text-[11px] text-[#5C6975] hover:text-[#8FA0AC] font-mono text-center">
+          <button type="button" onClick={() => setRegisterMode((m) => !m)} className="mt-3 w-full text-[11px] text-[var(--c-text-dim)] hover:text-[var(--c-text-muted)] font-mono text-center">
             {registerMode ? "Already set up? Sign in instead" : "First time here? Create the first Owner account"}
           </button>
         </Panel>
-        <p className="text-[11px] text-[#4B5661] text-center">
+        <p className="text-[11px] text-[var(--c-text-faint)] text-center">
           Additional accounts (Dispatch, Accountant, Driver) are created by an Owner after signing in.
         </p>
       </div>
